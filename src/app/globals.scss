@@ -1,0 +1,96 @@
+// Neutrals — light mode
+$white-smoke: #fcfcfb;
+$linen: #f9f9f7;
+$ink-black: #0b0b0b;
+$slate-gray: #52514e;
+$dusty-gray: #898781;
+$cloud-gray: #e1e0d9;
+$ash-gray: #c3c2b7;
+
+// Neutrals — dark mode
+$charcoal: #1a1a19;
+$true-black: #0d0d0d;
+$white: #ffffff;
+$graphite: #2c2c2a;
+$iron-gray: #383835;
+
+// Categorical series + status — mode-invariant
+$green: #008300;
+$crimson: #d03b3b;
+
+// Categorical series — light mode
+$blue: #2a78d6;
+$magenta: #e87ba4;
+$amber: #eda100;
+$aqua: #1baf7a;
+$orange: #eb6834;
+$violet: #4a3aa7;
+$red: #e34948;
+
+// Categorical series — dark mode
+$sky-blue: #3987e5;
+$rose: #d55181;
+$ochre: #c98500;
+$teal: #199e70;
+$burnt-orange: #d95926;
+$lavender: #9085e9;
+$coral: #e66767;
+
+:root {
+  color-scheme: light;
+  --surface-1: #{$white-smoke};
+  --page-plane: #{$linen};
+  --text-primary: #{$ink-black};
+  --text-secondary: #{$slate-gray};
+  --text-muted: #{$dusty-gray};
+  --gridline: #{$cloud-gray};
+  --baseline: #{$ash-gray};
+  --series-1: #{$blue};
+  --series-2: #{$green};
+  --series-3: #{$magenta};
+  --series-4: #{$amber};
+  --series-5: #{$aqua};
+  --series-6: #{$orange};
+  --series-7: #{$violet};
+  --series-8: #{$red};
+  --critical: #{$crimson};
+  --border-hairline: rgba(11, 11, 11, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --surface-1: #{$charcoal};
+    --page-plane: #{$true-black};
+    --text-primary: #{$white};
+    --text-secondary: #{$ash-gray};
+    --text-muted: #{$dusty-gray};
+    --gridline: #{$graphite};
+    --baseline: #{$iron-gray};
+    --series-1: #{$sky-blue};
+    --series-2: #{$green};
+    --series-3: #{$rose};
+    --series-4: #{$ochre};
+    --series-5: #{$teal};
+    --series-6: #{$burnt-orange};
+    --series-7: #{$lavender};
+    --series-8: #{$coral};
+    --critical: #{$crimson};
+    --border-hairline: rgba(255, 255, 255, 0.1);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page-plane);
+  color: var(--text-primary);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}

@@ -1,0 +1,30 @@
+.row {
+  margin: 0 0 12px;
+}
+
+.label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+
+  &[aria-invalid="true"] {
+    border-color: var(--critical);
+  }
+}
+
+.error {
+  color: var(--critical);
+  font-size: 12px;
+  margin: 4px 0 0;
+}

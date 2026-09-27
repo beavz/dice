@@ -1,0 +1,513 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px;
+
+  @media (min-width: 900px) {
+    max-width: 1200px;
+  }
+}
+
+.title {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  color: var(--text-secondary);
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.rollCard {
+  margin-bottom: 32px;
+
+  &:last-of-type {
+    margin-bottom: 24px;
+  }
+}
+
+.rollLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: 900px) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.rollConfig {
+  min-width: 0;
+
+  @media (min-width: 900px) {
+    flex: 0 0 320px;
+  }
+}
+
+.rollCharts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+
+  @media (min-width: 900px) {
+    flex: 1;
+  }
+}
+
+.rollHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.rollTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  margin: 0;
+}
+
+.rollIcon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.rollHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.duplicateRoll {
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.removeRoll {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  background: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--critical);
+    border-color: var(--critical);
+  }
+}
+
+.removeStepButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--critical);
+  }
+}
+
+.addRoll {
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.exprRow {
+  margin: 0 0 12px;
+}
+
+.exprLabel {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.exprInput {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+
+  &[aria-invalid="true"] {
+    border-color: var(--critical);
+  }
+}
+
+.exprError {
+  color: var(--critical);
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+.kindSelect {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 12px;
+  max-width: 260px;
+}
+
+.kindSelectButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--series-1);
+    outline-offset: 2px;
+  }
+}
+
+.kindSelectPopover {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  min-width: var(--trigger-width);
+}
+
+.kindSelectList {
+  padding: 4px;
+  outline: none;
+}
+
+.kindSelectItem {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+
+  &[data-focused],
+  &[data-focus-visible] {
+    background: var(--series-1);
+    color: var(--text-primary);
+  }
+
+  &[data-selected] {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+}
+
+.combineOptionLabel {
+  display: block;
+  font-weight: 600;
+}
+
+.combineOptionDescription {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.checkFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.stepFlow {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+}
+
+.stepNode {
+  display: flex;
+  gap: 12px;
+  position: relative;
+  padding-bottom: 20px;
+
+  &:last-of-type {
+    padding-bottom: 12px;
+  }
+
+  &:not(:last-of-type)::before {
+    content: "";
+    position: absolute;
+    top: 24px;
+    bottom: 0;
+    left: 11px;
+    width: 2px;
+    background: var(--border-hairline);
+  }
+}
+
+.stepMarker {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+
+  &::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--series-1);
+  }
+}
+
+.stepContent {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  background: var(--surface-1);
+  padding: 8px 12px 12px;
+}
+
+.stepLabel {
+  padding: 0 6px;
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.stepContentHeader {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.critOptionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.customStepActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: 36px;
+}
+
+.thenFields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.thenBranchToggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.thenBranches {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.branchColumn {
+  border-left: 2px solid var(--series-1);
+  padding-left: 16px;
+}
+
+.branchLabel {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.numberField {
+  display: flex;
+  flex-direction: column;
+}
+
+.numberFieldGroup {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.numberFieldButton {
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  border: none;
+  width: 24px;
+  cursor: pointer;
+  font-size: 14px;
+
+  &:first-child {
+    border-right: 1px solid var(--border-hairline);
+  }
+
+  &:last-child {
+    border-left: 1px solid var(--border-hairline);
+  }
+}
+
+.numberFieldInput {
+  width: 56px;
+  text-align: center;
+  border: none;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 6px 0;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.radioRow {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &[data-selected] {
+    color: var(--text-primary);
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkboxBox {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+  background: var(--surface-1);
+}
+
+.checkbox[data-selected] .checkboxBox {
+  background: var(--series-1);
+  border-color: var(--series-1);
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.secondaryCard {
+  margin-top: 12px;
+}
+
+.sectionLabel {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.empty {
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 48px 0;
+  margin: 0;
+}
+
+.tooltip {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.tooltipValue {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tooltipLabel {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tooltipSwatch {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
