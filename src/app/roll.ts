@@ -4,7 +4,6 @@ import { getCombiner, listCombiners, type Combiner } from "@/lib/outcome";
 type CustomScenarioArgs = Parameters<typeof Scenario.custom>[0];
 
 export type CombineAction = Combiner;
-export const COMBINE_ACTION_OPTIONS = listCombiners();
 
 export const MAX_COUNT_PER_DIE = 20;
 export const MIN_MODIFIER = -20;
@@ -14,18 +13,20 @@ export const MAX_DIFFICULTY = 30;
 
 export type DieCounts = Record<Die, number>;
 
-export type RegularRoll = {
-  id: string;
+// a plain pool of dice, optionally combined some way other than summing
+// (e.g. advantage/disadvantage) and tagged for crits or hope/fear.
+export type RegularInitialRoll = {
   kind: "regular";
-  name: string;
   counts: DieCounts;
   modifier: number;
+  combine: CombineAction;
+  criticalSuccess?: number;
+  criticalFailure?: number;
+  with?: "hope" | "fear";
 };
 
-export type CheckRoll = {
-  id: string;
+export type CheckInitialRoll = {
   kind: "check";
-  name: string;
   difficulty: number;
   modifier: number;
   nat1s: boolean;
@@ -33,20 +34,16 @@ export type CheckRoll = {
   disadvantage: boolean;
 };
 
-export type DaggerheartCheckRoll = {
-  id: string;
+export type DaggerheartCheckInitialRoll = {
   kind: "dhCheck";
-  name: string;
   difficulty: number;
   modifier: number;
   advantage: boolean;
   disadvantage: boolean;
 };
 
-export type AttackRoll = {
-  id: string;
+export type AttackInitialRoll = {
   kind: "attack";
-  name: string;
   armor: number;
   modifier: number;
   damageCounts: DieCounts;
@@ -56,10 +53,8 @@ export type AttackRoll = {
   disadvantage: boolean;
 };
 
-export type SpellSaveRoll = {
-  id: string;
+export type SpellSaveInitialRoll = {
   kind: "spellSave";
-  name: string;
   dc: number;
   saveModifier: number;
   damageCounts: DieCounts;
@@ -70,19 +65,18 @@ export type SpellSaveRoll = {
   disadvantage: boolean;
 };
 
-export type TossLowestRoll = {
-  id: string;
-  kind: "tossLowest";
-  name: string;
-  counts: DieCounts;
-  modifier: number;
-};
+export type InitialRoll =
+  | RegularInitialRoll
+  | CheckInitialRoll
+  | DaggerheartCheckInitialRoll
+  | AttackInitialRoll
+  | SpellSaveInitialRoll;
 
 export type ModifyStep = { id: string; type: "modify"; amount: number };
 export type EvaluateStep = { id: string; type: "evaluate"; difficulty: number };
 
-// the shape shared by the top-level custom roll, every "and" step, and every
-// "then" branch: an initial roll plus a list of further steps.
+// the shape shared by every "and" step and every "then" branch: a flat dice
+// pool plus a list of further steps.
 export type RollBlock = {
   counts: DieCounts;
   combine: CombineAction;
@@ -114,20 +108,14 @@ export type ThenStep = {
 
 export type CustomStep = ModifyStep | EvaluateStep | AndStep | ThenStep;
 
-export type CustomRoll = {
+// every roll is a flow chart: an initial roll (of any kind) followed by a
+// list of further steps.
+export type Roll = {
   id: string;
-  kind: "custom";
   name: string;
-} & RollBlock;
-
-export type Roll =
-  | RegularRoll
-  | CheckRoll
-  | DaggerheartCheckRoll
-  | AttackRoll
-  | SpellSaveRoll
-  | TossLowestRoll
-  | CustomRoll;
+  initialRoll: InitialRoll;
+  steps: CustomStep[];
+};
 
 export const INITIAL_COUNTS: DieCounts = {
   4: 0,
@@ -149,23 +137,20 @@ export const EMPTY_COUNTS: DieCounts = {
   100: 0,
 };
 
-export function createRegularRoll(
+export function createRegularInitialRoll(
   counts: DieCounts = INITIAL_COUNTS,
-): RegularRoll {
+): RegularInitialRoll {
   return {
-    id: crypto.randomUUID(),
     kind: "regular",
-    name: "",
     counts: { ...counts },
     modifier: 0,
+    combine: "sum",
   };
 }
 
-export function createCheckRoll(): CheckRoll {
+export function createCheckInitialRoll(): CheckInitialRoll {
   return {
-    id: crypto.randomUUID(),
     kind: "check",
-    name: "",
     difficulty: 15,
     modifier: 0,
     nat1s: false,
@@ -174,11 +159,9 @@ export function createCheckRoll(): CheckRoll {
   };
 }
 
-export function createDaggerheartCheckRoll(): DaggerheartCheckRoll {
+export function createDaggerheartCheckInitialRoll(): DaggerheartCheckInitialRoll {
   return {
-    id: crypto.randomUUID(),
     kind: "dhCheck",
-    name: "",
     difficulty: 15,
     modifier: 0,
     advantage: false,
@@ -186,11 +169,9 @@ export function createDaggerheartCheckRoll(): DaggerheartCheckRoll {
   };
 }
 
-export function createAttackRoll(): AttackRoll {
+export function createAttackInitialRoll(): AttackInitialRoll {
   return {
-    id: crypto.randomUUID(),
     kind: "attack",
-    name: "",
     armor: 15,
     modifier: 0,
     damageCounts: { ...EMPTY_COUNTS, 6: 1 },
@@ -201,11 +182,9 @@ export function createAttackRoll(): AttackRoll {
   };
 }
 
-export function createSpellSaveRoll(): SpellSaveRoll {
+export function createSpellSaveInitialRoll(): SpellSaveInitialRoll {
   return {
-    id: crypto.randomUUID(),
     kind: "spellSave",
-    name: "",
     dc: 15,
     saveModifier: 0,
     damageCounts: { ...EMPTY_COUNTS, 6: 3 },
@@ -217,14 +196,19 @@ export function createSpellSaveRoll(): SpellSaveRoll {
   };
 }
 
-export function createTossLowestRoll(): TossLowestRoll {
-  return {
-    id: crypto.randomUUID(),
-    kind: "tossLowest",
-    name: "",
-    counts: { ...EMPTY_COUNTS, 6: 4 },
-    modifier: 0,
-  };
+export function createInitialRoll(kind: InitialRoll["kind"]): InitialRoll {
+  switch (kind) {
+    case "regular":
+      return createRegularInitialRoll(EMPTY_COUNTS);
+    case "check":
+      return createCheckInitialRoll();
+    case "dhCheck":
+      return createDaggerheartCheckInitialRoll();
+    case "attack":
+      return createAttackInitialRoll();
+    case "spellSave":
+      return createSpellSaveInitialRoll();
+  }
 }
 
 export function createRollBlock(): RollBlock {
@@ -251,38 +235,21 @@ export function createAndStep(): AndStep {
   };
 }
 
-export function createCustomRoll(): CustomRoll {
+export function createRoll(counts?: DieCounts): Roll {
   return {
     id: crypto.randomUUID(),
-    kind: "custom",
     name: "",
-    ...createRollBlock(),
+    initialRoll: createRegularInitialRoll(counts),
+    steps: [],
   };
 }
 
-export function createRoll(counts?: DieCounts): Roll {
-  return createRegularRoll(counts);
-}
-
-export function withKind(roll: Roll, kind: Roll["kind"]): Roll {
-  if (roll.kind === kind) return roll;
-  const { id, name } = roll;
-  switch (kind) {
-    case "regular":
-      return { ...createRegularRoll(EMPTY_COUNTS), id, name };
-    case "check":
-      return { ...createCheckRoll(), id, name };
-    case "dhCheck":
-      return { ...createDaggerheartCheckRoll(), id, name };
-    case "attack":
-      return { ...createAttackRoll(), id, name };
-    case "spellSave":
-      return { ...createSpellSaveRoll(), id, name };
-    case "tossLowest":
-      return { ...createTossLowestRoll(), id, name };
-    case "custom":
-      return { ...createCustomRoll(), id, name };
-  }
+export function withInitialRollKind(
+  roll: Roll,
+  kind: InitialRoll["kind"],
+): Roll {
+  if (roll.initialRoll.kind === kind) return roll;
+  return { ...roll, initialRoll: createInitialRoll(kind) };
 }
 
 export function formatExpression(counts: DieCounts, modifier: number): string {
@@ -298,7 +265,33 @@ export function formatExpression(counts: DieCounts, modifier: number): string {
   return `${expression} ${sign} ${Math.abs(modifier)}`;
 }
 
-export function formatCheckExpression(roll: CheckRoll): string {
+function formatRegularInitialExpression(roll: RegularInitialRoll): string {
+  const base = formatExpression(roll.counts, roll.modifier);
+  if (!base) return "";
+
+  const diceCount = DICE.reduce(
+    (total, sides) => total + roll.counts[sides],
+    0,
+  );
+  const rollPart =
+    diceCount > 1 && roll.combine !== "sum"
+      ? `${base} (${getCombiner(roll.combine).label.toLowerCase()})`
+      : base;
+
+  const tags: string[] = [];
+  if (roll.criticalSuccess !== undefined) {
+    tags.push(`crit success on ${roll.criticalSuccess}`);
+  }
+  if (roll.criticalFailure !== undefined) {
+    tags.push(`crit failure on ${roll.criticalFailure}`);
+  }
+  if (roll.with) tags.push(`with ${roll.with}`);
+  const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
+
+  return rollPart + suffix;
+}
+
+export function formatCheckExpression(roll: CheckInitialRoll): string {
   const parts = [`DC ${roll.difficulty} check`];
   if (roll.modifier !== 0) {
     const sign = roll.modifier > 0 ? "+" : "-";
@@ -315,7 +308,7 @@ export function formatCheckExpression(roll: CheckRoll): string {
 }
 
 export function formatDaggerheartExpression(
-  roll: DaggerheartCheckRoll,
+  roll: DaggerheartCheckInitialRoll,
 ): string {
   const parts = [`DC ${roll.difficulty} Daggerheart check`];
   if (roll.modifier !== 0) {
@@ -331,7 +324,7 @@ export function formatDaggerheartExpression(
   return parts.join(" ") + suffix;
 }
 
-export function formatAttackExpression(roll: AttackRoll): string {
+export function formatAttackExpression(roll: AttackInitialRoll): string {
   const parts = [`AC ${roll.armor} attack`];
   if (roll.modifier !== 0) {
     const sign = roll.modifier > 0 ? "+" : "-";
@@ -350,7 +343,7 @@ export function formatAttackExpression(roll: AttackRoll): string {
   return parts.join(" ") + suffix;
 }
 
-export function formatSpellSaveExpression(roll: SpellSaveRoll): string {
+export function formatSpellSaveExpression(roll: SpellSaveInitialRoll): string {
   const parts = [`DC ${roll.dc} save`];
   if (roll.saveModifier !== 0) {
     const sign = roll.saveModifier > 0 ? "+" : "-";
@@ -371,9 +364,19 @@ export function formatSpellSaveExpression(roll: SpellSaveRoll): string {
   return parts.join(" ") + suffix;
 }
 
-export function formatTossLowestExpression(roll: TossLowestRoll): string {
-  const expression = formatExpression(roll.counts, roll.modifier);
-  return expression ? `${expression}, drop lowest` : "";
+function formatInitialRollExpression(initialRoll: InitialRoll): string {
+  switch (initialRoll.kind) {
+    case "regular":
+      return formatRegularInitialExpression(initialRoll);
+    case "check":
+      return formatCheckExpression(initialRoll);
+    case "dhCheck":
+      return formatDaggerheartExpression(initialRoll);
+    case "attack":
+      return formatAttackExpression(initialRoll);
+    case "spellSave":
+      return formatSpellSaveExpression(initialRoll);
+  }
 }
 
 const THEN_BRANCH_LABEL: Record<ThenBranchKind, string> = {
@@ -383,31 +386,26 @@ const THEN_BRANCH_LABEL: Record<ThenBranchKind, string> = {
   criticalFailure: "critical failure",
 };
 
-export function formatRollBlock(block: RollBlock): string {
-  const base = formatExpression(block.counts, 0);
-  if (!base) return "";
+export function getRollDisplayName(roll: Roll, index: number): string {
+  return roll.name.trim() || `Roll ${index + 1}`;
+}
 
-  const diceCount = DICE.reduce(
-    (total, sides) => total + block.counts[sides],
-    0,
-  );
-  const rollPart =
-    diceCount > 1 && block.combine !== "sum"
-      ? `${base} (${getCombiner(block.combine).label.toLowerCase()})`
-      : base;
+export function formatRollLabel(roll: Roll): string {
+  const base = formatInitialRollExpression(roll.initialRoll);
+  const parts = base ? [base] : [];
 
-  const parts = [rollPart];
-  for (const step of block.steps) {
+  for (const step of roll.steps) {
     if (step.type === "modify") {
       parts.push(`${step.amount >= 0 ? "+" : "-"} ${Math.abs(step.amount)}`);
     } else if (step.type === "evaluate") {
       parts.push(`vs DC ${step.difficulty}`);
     } else if (step.type === "and") {
       const dice = formatExpression(step.counts, 0);
-      if (dice)
+      if (dice) {
         parts.push(
           `and ${dice} (${getCombiner(step.action).label.toLowerCase()})`,
         );
+      }
     } else {
       const activeBranches = (
         Object.keys(step.branches) as ThenBranchKind[]
@@ -420,44 +418,7 @@ export function formatRollBlock(block: RollBlock): string {
     }
   }
 
-  const tags: string[] = [];
-  if (block.criticalSuccess !== undefined) {
-    tags.push(`crit success on ${block.criticalSuccess}`);
-  }
-  if (block.criticalFailure !== undefined) {
-    tags.push(`crit failure on ${block.criticalFailure}`);
-  }
-  if (block.with) tags.push(`with ${block.with}`);
-  const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
-
-  return parts.join(" ") + suffix;
-}
-
-export function formatCustomExpression(roll: CustomRoll): string {
-  return formatRollBlock(roll);
-}
-
-export function getRollDisplayName(roll: Roll, index: number): string {
-  return roll.name.trim() || `Roll ${index + 1}`;
-}
-
-export function formatRollLabel(roll: Roll): string {
-  switch (roll.kind) {
-    case "regular":
-      return formatExpression(roll.counts, roll.modifier);
-    case "check":
-      return formatCheckExpression(roll);
-    case "dhCheck":
-      return formatDaggerheartExpression(roll);
-    case "attack":
-      return formatAttackExpression(roll);
-    case "spellSave":
-      return formatSpellSaveExpression(roll);
-    case "tossLowest":
-      return formatTossLowestExpression(roll);
-    case "custom":
-      return formatCustomExpression(roll);
-  }
+  return parts.join(" ");
 }
 
 export function getDice(counts: DieCounts): Die[] {
@@ -516,63 +477,112 @@ function buildCustomStepArgs(step: CustomStep) {
   return { type: "then", after };
 }
 
-export function getScenario(roll: Roll): Scenario {
-  switch (roll.kind) {
-    case 'regular':
-    return Scenario.pool({ dice: getDice(roll.counts), modifier: roll.modifier });
-    case "tossLowest":
-    return Scenario.custom({
-      initialRoll: {
+function buildInitialRollArgs(initialRoll: InitialRoll) {
+  switch (initialRoll.kind) {
+    case "regular": {
+      const rollOptions = {
+        criticalSuccess:
+          initialRoll.criticalSuccess !== undefined
+            ? [initialRoll.criticalSuccess]
+            : undefined,
+        criticalFailure:
+          initialRoll.criticalFailure !== undefined
+            ? [initialRoll.criticalFailure]
+            : undefined,
+        with: initialRoll.with,
+      };
+      return {
         type: "basic",
-        args: { dice: getDice(roll.counts), combine: "tossLowest" },
-      },
-      steps: roll.modifier !== 0 ? [{ type: "modify", modifier: roll.modifier }] : [],
-    } as CustomScenarioArgs);
-    case "dhCheck":
-    return Scenario.daggerheartCheck({
-      difficulty: roll.difficulty,
-      modifier: roll.modifier,
-      options: {
-        has: roll.advantage ? 'advantage' : roll.disadvantage ? 'disadvantage' : undefined,
-      },
-    });
-    case "attack":
-    return Scenario.attack({
-      armor: roll.armor,
-      modifier: roll.modifier,
-      damageDice: getDice(roll.damageCounts),
-      damageModifier: roll.damageModifier,
-      options: {
-        nat1s: roll.nat1s,
-        has: roll.advantage ? 'advantage' : roll.disadvantage ? 'disadvantage' : undefined,
-      },
-    });
-    case "spellSave":
-    return Scenario.spellWithSave({
-      dc: roll.dc,
-      saveModifier: roll.saveModifier,
-      damageDice: getDice(roll.damageCounts),
-      damageModifier: roll.damageModifier,
-      options: {
-        nat1s: roll.nat1s,
-        has: roll.advantage ? 'advantage' : roll.disadvantage ? 'disadvantage' : undefined,
-        saveTakesHalf: roll.saveTakesHalf,
-      },
-    });
-    case "custom":
-      return Scenario.custom(buildRollBlockArgs(roll));
-    default:
-      return Scenario.check({
-        difficulty: roll.difficulty,
-        modifier: roll.modifier,
-        options: {
-          nat1s: roll.nat1s,
-          has: roll.advantage ? 'advantage' : roll.disadvantage ? 'disadvantage' : undefined,
+        args: {
+          dice: getDice(initialRoll.counts),
+          combine: initialRoll.combine,
+          options: rollOptions,
         },
-      });
+      };
+    }
+    case "check":
+      return {
+        type: "check",
+        args: {
+          difficulty: initialRoll.difficulty,
+          modifier: initialRoll.modifier,
+          options: {
+            nat1s: initialRoll.nat1s,
+            has: initialRoll.advantage
+              ? "advantage"
+              : initialRoll.disadvantage
+                ? "disadvantage"
+                : undefined,
+          },
+        },
+      };
+    case "dhCheck":
+      return {
+        type: "daggerheartCheck",
+        args: {
+          difficulty: initialRoll.difficulty,
+          modifier: initialRoll.modifier,
+          options: {
+            has: initialRoll.advantage
+              ? "advantage"
+              : initialRoll.disadvantage
+                ? "disadvantage"
+                : undefined,
+          },
+        },
+      };
+    case "attack":
+      return {
+        type: "attack",
+        args: {
+          armor: initialRoll.armor,
+          modifier: initialRoll.modifier,
+          damageDice: getDice(initialRoll.damageCounts),
+          damageModifier: initialRoll.damageModifier,
+          options: {
+            nat1s: initialRoll.nat1s,
+            has: initialRoll.advantage
+              ? "advantage"
+              : initialRoll.disadvantage
+                ? "disadvantage"
+                : undefined,
+          },
+        },
+      };
+    case "spellSave":
+      return {
+        type: "spellWithSave",
+        args: {
+          dc: initialRoll.dc,
+          saveModifier: initialRoll.saveModifier,
+          damageDice: getDice(initialRoll.damageCounts),
+          damageModifier: initialRoll.damageModifier,
+          options: {
+            nat1s: initialRoll.nat1s,
+            has: initialRoll.advantage
+              ? "advantage"
+              : initialRoll.disadvantage
+                ? "disadvantage"
+                : undefined,
+            saveTakesHalf: initialRoll.saveTakesHalf,
+          },
+        },
+      };
   }
 }
 
+export function getScenario(roll: Roll): Scenario {
+  const initialRollArgs = buildInitialRollArgs(roll.initialRoll);
+  const modifierStep =
+    roll.initialRoll.kind === "regular" && roll.initialRoll.modifier !== 0
+      ? [{ type: "modify", modifier: roll.initialRoll.modifier }]
+      : [];
+
+  return Scenario.custom({
+    initialRoll: initialRollArgs,
+    steps: [...modifierStep, ...roll.steps.map((step) => buildCustomStepArgs(step))],
+  } as CustomScenarioArgs);
+}
 
 export const CATEGORICAL_COLORS = [
   "var(--series-1)",
@@ -600,4 +610,3 @@ export function sortCategories(categories: string[]): string[] {
     return a.localeCompare(b);
   });
 }
-

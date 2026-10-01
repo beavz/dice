@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "react-aria-components";
+import Button from "@/components/Button";
 import RollCard from "./RollCard";
 import ComparisonChart from "./ComparisonChart";
 import { createRoll, EMPTY_COUNTS, type Roll } from "./roll";
@@ -57,9 +57,7 @@ export default function Home() {
         />
       ))}
 
-      <Button className={styles.addRoll} onPress={addRoll}>
-        Add roll
-      </Button>
+      <Button onPress={addRoll}>Add roll</Button>
 
       {rolls.length > 1 && <ComparisonChart rolls={rolls} />}
     </main>

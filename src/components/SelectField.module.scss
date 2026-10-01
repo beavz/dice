@@ -1,0 +1,83 @@
+.select {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 12px;
+  max-width: 260px;
+}
+
+.label {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+
+  &[data-focus-visible] {
+    outline: 2px solid var(--series-1);
+    outline-offset: 2px;
+  }
+}
+
+.value {
+  font-size: 14px;
+}
+
+.popover {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  min-width: var(--trigger-width);
+}
+
+.list {
+  padding: 4px;
+  outline: none;
+}
+
+.item {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  outline: none;
+
+  &[data-focused],
+  &[data-focus-visible] {
+    background: var(--series-1);
+    color: var(--text-primary);
+  }
+
+  &[data-selected] {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+}
+
+.optionLabel {
+  display: block;
+  font-weight: 600;
+}
+
+.optionDescription {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
