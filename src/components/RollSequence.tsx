@@ -11,31 +11,29 @@ import Button from "@/components/Button";
 import SelectField, { type SelectFieldOption } from "@/components/SelectField";
 import {
   createAndStep,
-  createThenBranch,
+  createThenStep,
   withInitialRollKind,
-  MAX_DIFFICULTY,
-  MIN_DIFFICULTY,
-  MAX_MODIFIER,
-  MIN_MODIFIER,
   type CombineAction,
   type AndStep,
-  type AttackInitialRoll,
-  type CheckInitialRoll,
-  type DaggerheartCheckInitialRoll,
-  type CustomStep,
-  type InitialRoll,
-  type RegularInitialRoll,
-  type Roll,
-  type RollBlock,
-  type SpellSaveInitialRoll,
-  type ThenBranch,
-  type ThenBranchKind,
   type ThenStep,
+  type AgainstStep,
+  type ModifyStep,
+  type Step,
+  type Roll as AppRoll,
 } from "@/app/roll";
-import { getCombiner, listCombiners, type Combiner } from "@/lib/outcome";
-import { DICE } from "@/lib/dice";
+import { listCombiners, type Combiner } from "@/lib/outcome";
+import {
+  type Roll,
+  type RollOptions,
+  type BasicRoll,
+  type AttackRoll,
+  type CheckRoll,
+  type DaggerheartCheckRoll,
+  type DamageRoll,
+  type SpellRoll,
+} from "@/lib/dice";
 import CloseIcon from "@/components/CloseIcon";
-import DiceField from "@/components/DiceField";
+import DiceField, { countsFromDice, getDice, totalDice } from "@/components/DiceField";
 import NumberField from "@/components/NumberField";
 import RadioGroupField from "@/components/RadioGroupField";
 import styles from "./RollSequence.module.scss";
@@ -59,26 +57,6 @@ function CombineActionField({ value, onChange }: CombineActionFieldProps) {
   );
 }
 
-type CombineRollFieldsProps = {
-  value: ThenBranch;
-  onChange: (value: ThenBranch) => void;
-};
-
-function CombineRollFields({ value, onChange }: CombineRollFieldsProps) {
-  return (
-    <>
-      <CombineActionField
-        value={value.action}
-        onChange={(action) => onChange({ ...value, action })}
-      />
-      <RollBlockFields
-        block={value}
-        onChange={(block) => onChange({ ...value, ...block })}
-      />
-    </>
-  );
-}
-
 type AndStepProps = {
   step: AndStep;
   onChange: (step: AndStep) => void;
@@ -89,17 +67,17 @@ function AndStep({ step, onChange, onRemove }: AndStepProps) {
   return (
     <>
       <div className={styles.andBranch}>
-        <RollBlockFields
+        <Roll
           label="And roll..."
-          block={step}
+          rollSequence={step.roll as any}
           onChange={(block) => onChange({ ...step, ...block })}
           onRemove={onRemove}
         />
       </div>
       <div className={styles.andMerge}>
         <CombineActionField
-          value={step.action}
-          onChange={(action) => onChange({ ...step, action })}
+          value={step.combine}
+          onChange={(combine) => onChange({ ...step, combine })}
         />
       </div>
     </>
@@ -113,33 +91,21 @@ const THEN_BRANCH_KINDS = [
   "criticalFailure",
 ] as const;
 
-const THEN_BRANCH_LABEL: Record<ThenBranchKind, string> = {
-  success: "On success",
-  failure: "On failure",
-  criticalSuccess: "On critical success",
-  criticalFailure: "On critical failure",
-};
-
-const ROLL_KIND_OPTIONS: SelectFieldOption<InitialRoll["kind"]>[] = [
-  { value: "regular", label: "Regular" },
+const ROLL_KIND_OPTIONS: SelectFieldOption<Roll["type"]>[] = [
+  { value: "basic", label: "Basic" },
   { value: "check", label: "Check" },
-  { value: "dhCheck", label: "Daggerheart" },
-  { value: "attack", label: "Attack" },
-  { value: "spellSave", label: "Spell Save" },
+  { value: "daggerheartCheck", label: "Daggerheart-style check" },
+  { value: "attack", label: "Attack with damage" },
+  { value: "spellWithSave", label: "Spell cast with a save" },
+  { value: "damage", label: "Damage roll" },
 ];
 
-type RollOptionsValue = {
-  criticalSuccess?: number;
-  criticalFailure?: number;
-  with?: "hope" | "fear";
-};
-
-type RollOptionsFieldsProps<T extends RollOptionsValue> = {
+type RollOptionsFieldsProps<T extends RollOptions> = {
   value: T;
   onChange: (value: T) => void;
 };
 
-function RollOptionsFields<T extends RollOptionsValue>({
+function RollOptionsFields<T extends RollOptions>({
   value,
   onChange,
 }: RollOptionsFieldsProps<T>) {
@@ -217,28 +183,20 @@ function RollOptionsFields<T extends RollOptionsValue>({
 }
 
 type StepListProps = {
-  steps: CustomStep[];
-  onChange: (steps: CustomStep[]) => void;
+  steps: Step[];
+  onChange: (steps: Step[]) => void;
 };
 
 function StepList({ steps, onChange }: StepListProps) {
-  function addStep(type: CustomStep["type"]) {
-    const step: CustomStep =
-      type === "modify"
-        ? { id: crypto.randomUUID(), type: "modify", amount: 1 }
-        : type === "evaluate"
-          ? { id: crypto.randomUUID(), type: "evaluate", difficulty: 15 }
-          : type === "and"
-            ? createAndStep()
-            : { id: crypto.randomUUID(), type: "then", branches: {} };
-    onChange([...steps, step]);
+  function addStep(step: Step) {
+    onChange([ ...steps, step ]);
   }
 
   function removeStep(id: string) {
     onChange(steps.filter((step) => step.id !== id));
   }
 
-  function updateStep(id: string, updated: CustomStep) {
+  function updateStep(id: string, updated: Step) {
     onChange(steps.map((step) => (step.id === id ? updated : step)));
   }
 
@@ -248,17 +206,39 @@ function StepList({ steps, onChange }: StepListProps) {
         <StepNode
           key={step.id}
           step={step}
-          onChange={(updated) => updateStep(step.id, updated)}
-          onRemove={() => removeStep(step.id)}
+          onChange={(updated) => step.id && updateStep(step.id, updated)}
+          onRemove={() => step.id && removeStep(step.id)}
         />
       ))}
 
+      <AddStep onSelect={addStep}/>
+    </>
+  );
+}
+
+type AddStepProps = {
+  onSelect: (step: Step) => void;
+};
+function AddStep({ onSelect }: AddStepProps) {
+  function addStep(type: Step["type"]) {
+    const step: Step =
+      type === "modify"
+        ? { id: crypto.randomUUID(), type: "modify", modifier: 1 }
+        : type === "against"
+          ? { id: crypto.randomUUID(), type: "against", difficulty: 15 }
+          : type === "and"
+            ? createAndStep()
+            : createThenStep()
+    onSelect(step);
+  }
+
+  return (
       <div className={styles.customStepActions}>
         <MenuTrigger>
           <Button>+ Add step</Button>
           <Popover className={styles.kindSelectPopover}>
             <Menu
-              onAction={(key) => addStep(key as CustomStep["type"])}
+              onAction={(key) => addStep(key as Step["type"])}
               className={styles.kindSelectList}
             >
               <MenuItem id="modify" className={styles.kindSelectItem}>
@@ -277,49 +257,6 @@ function StepList({ steps, onChange }: StepListProps) {
           </Popover>
         </MenuTrigger>
       </div>
-    </>
-  );
-}
-
-type RollBlockFieldsProps = {
-  block: RollBlock;
-  onChange: (block: RollBlock) => void;
-  label?: string;
-  onRemove?: () => void;
-};
-
-function RollBlockFields({ block, onChange, onRemove, label = "Roll" }: RollBlockFieldsProps) {
-  const rollDiceCount = DICE.reduce(
-    (total, sides) => total + block.counts[sides],
-    0,
-  );
-
-  return (
-    <>
-      <Node label={label} onRemove={onRemove}>
-        <DiceField
-          ariaLabel="Dice to roll"
-          placeholder="e.g. 2d8"
-          counts={block.counts}
-          allowModifier={false}
-          onChange={(counts) => onChange({ ...block, counts })}
-        />
-
-        {rollDiceCount > 1 && (
-          <CombineActionField
-            value={block.combine}
-            onChange={(combine) => onChange({ ...block, combine })}
-          />
-        )}
-
-        <RollOptionsFields value={block} onChange={onChange} />
-      </Node>
-
-      <StepList
-        steps={block.steps}
-        onChange={(steps) => onChange({ ...block, steps })}
-      />
-    </>
   );
 }
 
@@ -349,8 +286,8 @@ function Node({ label, onRemove, children }: NodeProps) {
 }
 
 type StepNodeProps = {
-  step: CustomStep;
-  onChange: (step: CustomStep) => void;
+  step: Step;
+  onChange: (step: Step) => void;
   onRemove: () => void;
 };
 
@@ -360,87 +297,29 @@ function StepNode({ step, onChange, onRemove }: StepNodeProps) {
   }
   return (
     <Node
-      label={step.type === "modify" ? "Modify" : step.type === "evaluate" ? "Evaluate (DC)" : "Then"}
+      label={step.type === "modify" ? "Modify" : step.type === "against" ? "Evaluate (DC)" : "Then"}
       onRemove={onRemove}
     >
       {step.type === "modify" ? (
         <NumberField
-          ariaLabel="Amount"
-          value={step.amount}
-          minValue={MIN_MODIFIER}
-          maxValue={MAX_MODIFIER}
-          onChange={(amount) => onChange({ ...step, amount })}
+          ariaLabel="Modifier"
+          value={step.modifier}
+          minValue={-20}
+          maxValue={20}
+          onChange={(modifier) => onChange({ ...step, modifier })}
         />
-      ) : step.type === "evaluate" ? (
+      ) : step.type === "against" ? (
         <NumberField
           ariaLabel="Difficulty (DC)"
           value={step.difficulty}
-          minValue={MIN_DIFFICULTY}
-          maxValue={MAX_DIFFICULTY}
+          minValue={0}
+          maxValue={30}
           onChange={(difficulty) => onChange({ ...step, difficulty })}
         />
       ) : (
-        <ThenStepFields step={step} onChange={onChange} />
+        <>TODO - then step here</>
       )}
     </Node>
-  );
-}
-
-type ThenStepFieldsProps = {
-  step: ThenStep;
-  onChange: (step: ThenStep) => void;
-};
-
-function ThenStepFields({ step, onChange }: ThenStepFieldsProps) {
-  function setBranchEnabled(kind: ThenBranchKind, enabled: boolean) {
-    const branches = { ...step.branches };
-    if (enabled) {
-      branches[kind] = createThenBranch();
-    } else {
-      delete branches[kind];
-    }
-    onChange({ ...step, branches });
-  }
-
-  function updateBranch(kind: ThenBranchKind, branch: ThenBranch) {
-    onChange({ ...step, branches: { ...step.branches, [kind]: branch } });
-  }
-
-  return (
-    <div className={styles.thenFields}>
-      <div className={styles.thenBranchToggles}>
-        {THEN_BRANCH_KINDS.map((kind) => (
-          <Checkbox
-            key={kind}
-            isSelected={step.branches[kind] !== undefined}
-            onChange={(enabled) => setBranchEnabled(kind, enabled)}
-            className={styles.checkbox}
-          >
-            <div className={styles.checkboxBox} aria-hidden="true" />
-            {THEN_BRANCH_LABEL[kind]}
-          </Checkbox>
-        ))}
-      </div>
-
-      <div className={styles.thenBranches}>
-        {THEN_BRANCH_KINDS.filter((kind) => step.branches[kind]).map(
-          (kind) => {
-            const branch = step.branches[kind] as ThenBranch;
-            return (
-              <div key={kind} className={styles.branchColumn}>
-                <span className={styles.branchLabel}>
-                  {THEN_BRANCH_LABEL[kind]}
-                </span>
-                <CombineRollFields
-                  value={branch}
-                  onChange={(updated) => updateBranch(kind, updated)}
-                />
-              </div>
-            );
-          },
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -449,11 +328,10 @@ type DifficultyFieldsProps = {
   modifierLabel?: string;
   difficulty: number;
   modifier: number;
-  advantage: boolean;
-  disadvantage: boolean;
+  has?: 'advantage' | 'disadvantage';
   onDifficultyChange: (difficulty: number) => void;
   onModifierChange: (modifier: number) => void;
-  onRollTypeChange: (advantage: boolean, disadvantage: boolean) => void;
+  onHasChange: (has: 'advantage' | 'disadvantage' | undefined) => void;
 };
 
 function DifficultyFields({
@@ -461,113 +339,111 @@ function DifficultyFields({
   modifierLabel = "Modifier",
   difficulty,
   modifier,
-  advantage,
-  disadvantage,
+  has,
   onDifficultyChange,
   onModifierChange,
-  onRollTypeChange,
+  onHasChange,
 }: DifficultyFieldsProps) {
-  const rollType = advantage
-    ? "advantage"
-    : disadvantage
-      ? "disadvantage"
-      : "normal";
-
   return (
     <>
       <NumberField
         label={label}
         value={difficulty}
-        minValue={MIN_DIFFICULTY}
-        maxValue={MAX_DIFFICULTY}
+        minValue={0}
+        maxValue={30}
         onChange={onDifficultyChange}
       />
 
       <NumberField
         label={modifierLabel}
         value={modifier}
-        minValue={MIN_MODIFIER}
-        maxValue={MAX_MODIFIER}
+        minValue={-20}
+        maxValue={20}
         onChange={onModifierChange}
       />
 
       <RadioGroupField
         label="Has"
-        value={rollType}
+        value={has ?? 'neither'}
         options={[
           { value: "advantage", label: "Advantage" },
           { value: "disadvantage", label: "Disadvantage" },
-          { value: "normal", label: "Neither" },
+          { value: "neither", label: "Neither" },
         ]}
         onChange={(value) =>
-          onRollTypeChange(value === "advantage", value === "disadvantage")
+          onHasChange(value === 'neither' ? undefined : value)
         }
       />
     </>
   );
 }
 
-type RegularInitialRollFieldsProps = {
-  roll: RegularInitialRoll;
-  onChange: (roll: RegularInitialRoll) => void;
+type BasicRollFieldsProps = {
+  roll: BasicRoll;
+  onChange: (roll: BasicRoll) => void;
 };
 
-function RegularInitialRollFields({
-  roll,
-  onChange,
-}: RegularInitialRollFieldsProps) {
-  const diceCount = DICE.reduce(
-    (total, sides) => total + roll.counts[sides],
-    0,
-  );
+function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
+  const dice = roll.args.dice ?? [roll.args.die];
+
+  function updateArgs(partial: Partial<BasicRoll['args']>) {
+    onChange({ ...roll, args: { ...roll.args as any, ...partial } });
+  }
 
   return (
     <>
       <DiceField
         label="Type a roll"
-        counts={roll.counts}
-        modifier={roll.modifier}
-        onChange={(counts, modifier) => onChange({ ...roll, counts, modifier })}
+        counts={countsFromDice(dice)}
+        allowModifier={false}
+        onChange={(counts) => {
+          const dice = getDice(counts);
+          const args: Partial<BasicRoll['args']> = dice.length === 1 ? { die: dice[0], dice: undefined } : { dice, die: undefined };
+          updateArgs(args)
+        }}
       />
 
-      {diceCount > 1 && (
+      {roll.args.dice && dice.length > 1 && (
         <CombineActionField
-          value={roll.combine}
-          onChange={(combine) => onChange({ ...roll, combine })}
+          value={roll.args.combine ?? 'sum'}
+          onChange={(combine) => updateArgs({ combine })}
         />
       )}
 
-      <RollOptionsFields value={roll} onChange={onChange} />
+      <RollOptionsFields
+        value={roll.args.options ?? {}}
+        onChange={(options) => updateArgs({ options })}
+      />
     </>
   );
 }
 
-type CheckInitialRollFieldsProps = {
-  roll: CheckInitialRoll;
-  onChange: (roll: CheckInitialRoll) => void;
+type CheckRollFieldsProps = {
+  roll: CheckRoll;
+  onChange: (roll: CheckRoll) => void;
 };
 
-function CheckInitialRollFields({
-  roll,
-  onChange,
-}: CheckInitialRollFieldsProps) {
+function CheckRollFields({ roll, onChange }: CheckRollFieldsProps) {
+  const { difficulty, modifier, options = {} } = roll.args;
+
+  function updateArgs(partial: Partial<CheckRoll["args"]>) {
+    onChange({ ...roll, args: { ...roll.args, ...partial } });
+  }
+
   return (
     <div className={styles.checkFields}>
       <DifficultyFields
-        difficulty={roll.difficulty}
-        modifier={roll.modifier}
-        advantage={roll.advantage}
-        disadvantage={roll.disadvantage}
-        onDifficultyChange={(difficulty) => onChange({ ...roll, difficulty })}
-        onModifierChange={(modifier) => onChange({ ...roll, modifier })}
-        onRollTypeChange={(advantage, disadvantage) =>
-          onChange({ ...roll, advantage, disadvantage })
-        }
+        difficulty={difficulty}
+        modifier={modifier}
+        has={options.has}
+        onDifficultyChange={(difficulty) => updateArgs({ difficulty })}
+        onModifierChange={(modifier) => updateArgs({ modifier })}
+        onHasChange={(has) => updateArgs({ options: { ...options, has } })}
       />
 
       <Checkbox
-        isSelected={roll.nat1s}
-        onChange={(nat1s) => onChange({ ...roll, nat1s })}
+        isSelected={options.nat1s ?? false}
+        onChange={(nat1s) => updateArgs({ options: { ...options, nat1s } })}
         className={styles.checkbox}
       >
         <div className={styles.checkboxBox} aria-hidden="true" />
@@ -577,69 +453,69 @@ function CheckInitialRollFields({
   );
 }
 
-type DaggerheartCheckInitialRollFieldsProps = {
-  roll: DaggerheartCheckInitialRoll;
-  onChange: (roll: DaggerheartCheckInitialRoll) => void;
+type DaggerheartCheckRollFieldsProps = {
+  roll: DaggerheartCheckRoll;
+  onChange: (roll: DaggerheartCheckRoll) => void;
 };
 
-function DaggerheartCheckInitialRollFields({
-  roll,
-  onChange,
-}: DaggerheartCheckInitialRollFieldsProps) {
+function DaggerheartCheckRollFields({ roll, onChange }: DaggerheartCheckRollFieldsProps) {
+  const { difficulty, modifier = 0, options = {} } = roll.args;
+
+  function updateArgs(partial: Partial<DaggerheartCheckRoll["args"]>) {
+    onChange({ ...roll, args: { ...roll.args, ...partial } });
+  }
+
   return (
     <div className={styles.checkFields}>
       <DifficultyFields
-        difficulty={roll.difficulty}
-        modifier={roll.modifier}
-        advantage={roll.advantage}
-        disadvantage={roll.disadvantage}
-        onDifficultyChange={(difficulty) => onChange({ ...roll, difficulty })}
-        onModifierChange={(modifier) => onChange({ ...roll, modifier })}
-        onRollTypeChange={(advantage, disadvantage) =>
-          onChange({ ...roll, advantage, disadvantage })
-        }
+        difficulty={difficulty}
+        modifier={modifier}
+        has={options.has}
+        onDifficultyChange={(difficulty) => updateArgs({ difficulty })}
+        onModifierChange={(modifier) => updateArgs({ modifier })}
+        onHasChange={(has) => updateArgs({ options: { has } })}
       />
     </div>
   );
 }
 
-type AttackInitialRollFieldsProps = {
-  roll: AttackInitialRoll;
-  onChange: (roll: AttackInitialRoll) => void;
+type AttackRollFieldsProps = {
+  roll: AttackRoll;
+  onChange: (roll: AttackRoll) => void;
 };
 
-function AttackInitialRollFields({
-  roll,
-  onChange,
-}: AttackInitialRollFieldsProps) {
+function AttackRollFields({ roll, onChange }: AttackRollFieldsProps) {
+  const { armor, modifier, damageDice, damageModifier = 0, options = {} } = roll.args;
+
+  function updateArgs(partial: Partial<AttackRoll["args"]>) {
+    onChange({ ...roll, args: { ...roll.args, ...partial } });
+  }
+
   return (
     <div className={styles.checkFields}>
       <DifficultyFields
         label="Armor Class (AC)"
-        difficulty={roll.armor}
-        modifier={roll.modifier}
-        advantage={roll.advantage}
-        disadvantage={roll.disadvantage}
-        onDifficultyChange={(armor) => onChange({ ...roll, armor })}
-        onModifierChange={(modifier) => onChange({ ...roll, modifier })}
-        onRollTypeChange={(advantage, disadvantage) =>
-          onChange({ ...roll, advantage, disadvantage })
-        }
+        difficulty={armor}
+        modifier={modifier}
+        has={options.has}
+        onDifficultyChange={(armor) => updateArgs({ armor })}
+        onModifierChange={(modifier) => updateArgs({ modifier })}
+        onHasChange={(has) => updateArgs({ options: { ...options, has } }) }
       />
 
       <DiceField
         label="Damage"
         placeholder="e.g. 2d6 + 3"
-        counts={roll.damageCounts}
-        modifier={roll.damageModifier}
+        counts={countsFromDice(damageDice)}
+        modifier={damageModifier}
         onChange={(damageCounts, damageModifier) =>
-          onChange({ ...roll, damageCounts, damageModifier })
+          updateArgs({ damageDice: getDice(damageCounts), damageModifier })
         }
       />
 
       <Checkbox
-        isSelected={roll.nat1s}
-        onChange={(nat1s) => onChange({ ...roll, nat1s })}
+        isSelected={options.nat1s ?? false}
+        onChange={(nat1s) => updateArgs({ options: { ...options, nat1s } })}
         className={styles.checkbox}
       >
         <div className={styles.checkboxBox} aria-hidden="true" />
@@ -649,44 +525,44 @@ function AttackInitialRollFields({
   );
 }
 
-type SpellSaveInitialRollFieldsProps = {
-  roll: SpellSaveInitialRoll;
-  onChange: (roll: SpellSaveInitialRoll) => void;
+type SpellRollFieldsProps = {
+  roll: SpellRoll;
+  onChange: (roll: SpellRoll) => void;
 };
 
-function SpellSaveInitialRollFields({
-  roll,
-  onChange,
-}: SpellSaveInitialRollFieldsProps) {
+function SpellRollFields({ roll, onChange }: SpellRollFieldsProps) {
+  const { dc, saveModifier = 0, damageDice, damageModifier = 0, options = {} } = roll.args;
+
+  function updateArgs(partial: Partial<SpellRoll["args"]>) {
+    onChange({ ...roll, args: { ...roll.args, ...partial } });
+  }
+
   return (
     <div className={styles.checkFields}>
       <DifficultyFields
         label="Spell DC"
         modifierLabel="Target's save modifier"
-        difficulty={roll.dc}
-        modifier={roll.saveModifier}
-        advantage={roll.advantage}
-        disadvantage={roll.disadvantage}
-        onDifficultyChange={(dc) => onChange({ ...roll, dc })}
-        onModifierChange={(saveModifier) => onChange({ ...roll, saveModifier })}
-        onRollTypeChange={(advantage, disadvantage) =>
-          onChange({ ...roll, advantage, disadvantage })
-        }
+        difficulty={dc}
+        modifier={saveModifier}
+        has={options.has}
+        onDifficultyChange={(dc) => updateArgs({ dc })}
+        onModifierChange={(saveModifier) => updateArgs({ saveModifier })}
+        onHasChange={(has) => updateArgs({ options: { ...options, has } })}
       />
 
       <DiceField
         label="Damage"
         placeholder="e.g. 8d6"
-        counts={roll.damageCounts}
-        modifier={roll.damageModifier}
+        counts={countsFromDice(damageDice)}
+        modifier={damageModifier}
         onChange={(damageCounts, damageModifier) =>
-          onChange({ ...roll, damageCounts, damageModifier })
+          updateArgs({ damageDice: getDice(damageCounts), damageModifier })
         }
       />
 
       <Checkbox
-        isSelected={roll.saveTakesHalf}
-        onChange={(saveTakesHalf) => onChange({ ...roll, saveTakesHalf })}
+        isSelected={options.saveTakesHalf ?? false}
+        onChange={(saveTakesHalf) => updateArgs({ options: { ...options, saveTakesHalf } })}
         className={styles.checkbox}
       >
         <div className={styles.checkboxBox} aria-hidden="true" />
@@ -694,8 +570,8 @@ function SpellSaveInitialRollFields({
       </Checkbox>
 
       <Checkbox
-        isSelected={roll.nat1s}
-        onChange={(nat1s) => onChange({ ...roll, nat1s })}
+        isSelected={options.nat1s ?? false}
+        onChange={(nat1s) => updateArgs({ options: { ...options, nat1s } })}
         className={styles.checkbox}
       >
         <div className={styles.checkboxBox} aria-hidden="true" />
@@ -705,76 +581,94 @@ function SpellSaveInitialRollFields({
   );
 }
 
-type InitialRollFieldsProps = {
-  initialRoll: InitialRoll;
-  onChange: (initialRoll: InitialRoll) => void;
+type DamageRollFieldsProps = {
+  roll: DamageRoll;
+  onChange: (roll: DamageRoll) => void;
 };
 
-function InitialRollFields({ initialRoll, onChange }: InitialRollFieldsProps) {
-  switch (initialRoll.kind) {
-    case "regular":
-      return <RegularInitialRollFields roll={initialRoll} onChange={onChange} />;
+function DamageRollFields({ roll, onChange }: DamageRollFieldsProps) {
+  return (
+    <DiceField
+      label="Damage"
+      counts={countsFromDice(roll.args.dice)}
+      modifier={roll.args.modifier ?? 0}
+      onChange={(counts, modifier) =>
+        onChange({ ...roll, args: { dice: getDice(counts), modifier } })
+      }
+    />
+  );
+}
+
+type RollFieldsProps = {
+  roll: Roll;
+  onChange: (roll: Roll) => void;
+};
+
+function RollFields({ roll, onChange }: RollFieldsProps) {
+  switch (roll.type) {
+    case "basic":
+      return <BasicRollFields roll={roll} onChange={onChange} />;
     case "check":
-      return <CheckInitialRollFields roll={initialRoll} onChange={onChange} />;
-    case "dhCheck":
+      return <CheckRollFields roll={roll} onChange={onChange} />;
+    case "daggerheartCheck":
       return (
-        <DaggerheartCheckInitialRollFields
-          roll={initialRoll}
-          onChange={onChange}
-        />
+        <DaggerheartCheckRollFields roll={roll} onChange={onChange} />
       );
     case "attack":
-      return <AttackInitialRollFields roll={initialRoll} onChange={onChange} />;
-    case "spellSave":
+      return <AttackRollFields roll={roll} onChange={onChange} />;
+    case "spellWithSave":
       return (
-        <SpellSaveInitialRollFields roll={initialRoll} onChange={onChange} />
+        <SpellRollFields roll={roll} onChange={onChange} />
+      );
+    case "damage":
+      return (
+        <DamageRollFields roll={roll} onChange={onChange} />
       );
   }
 }
 
 type RollProps = {
-  roll: Roll,
+  rollSequence: AppRoll,
   label: string,
   onRemove?: () => void,
-  onChange: (roll: Roll) => void;
+  onChange: (rollSequence: AppRoll) => void;
 }
 
-function Roll({ roll, label, onRemove, onChange }: RollProps) {
+function Roll({ rollSequence, label = 'Roll', onRemove, onChange }: RollProps) {
   return (
     <>
-      <Node label="Roll">
+      <Node label={label} onRemove={onRemove}>
         <SelectField
           label="Roll type"
-          value={roll.initialRoll.kind}
-          onChange={(kind) => onChange(withInitialRollKind(roll, kind))}
+          value={rollSequence.initialRoll.type}
+          onChange={(type) => onChange(withInitialRollKind(rollSequence, type))}
           options={ROLL_KIND_OPTIONS}
         />
 
-        <InitialRollFields
-          initialRoll={roll.initialRoll}
-          onChange={(initialRoll) => onChange({ ...roll, initialRoll })}
+        <RollFields
+          roll={rollSequence.initialRoll}
+          onChange={(initialRoll) => onChange({ ...rollSequence, initialRoll })}
         />
       </Node>
 
       <StepList
-        steps={roll.steps}
-        onChange={(steps) => onChange({ ...roll, steps })}
+        steps={rollSequence.steps}
+        onChange={(steps) => onChange({ ...rollSequence, steps })}
       />
     </>
   );
 }
 
 export type RollSequenceProps = {
-  roll: Roll;
-  onChange: (roll: Roll) => void;
+  rollSequence: AppRoll;
+  onChange: (roll: AppRoll) => void;
 };
 
-export default function RollSequence({ roll, onChange }: RollSequenceProps) {
+export default function RollSequence({ rollSequence, onChange }: RollSequenceProps) {
   return (
     <div className={styles.stepFlow}>
-      <Roll label="Roll" onChange={onChange} roll={roll}/>
+      <Roll label="Roll" onChange={onChange} rollSequence={rollSequence}/>
     </div>
   );
 }
-
 

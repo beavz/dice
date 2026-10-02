@@ -4,34 +4,45 @@ export const DICE = [4, 6, 8, 10, 12, 20, 100] as const;
 export type Die = (typeof DICE)[number];
 type Dice = Array<Die>
 
-type InitialRoll = {
+export type BasicRoll = {
   type: 'basic',
   args: { die: Die; dice?: never, options?: RollOptions } |
   { dice: Dice; die?: never, options?: RollOptions, combine: Combiner }
-} |
-  { type: 'pool', args: Parameters<typeof Scenario['pool']>[0] } |
-  { type: 'check', args: Parameters<typeof Scenario['check']>[0] } |
-  { type: 'daggerheartCheck', args: Parameters<typeof Scenario['daggerheartCheck']>[0] } |
-  { type: 'attack', args: Parameters<typeof Scenario['attack']>[0] } |
-  { type: 'spellWithSave', args: Parameters<typeof Scenario['spellWithSave']>[0] }
+}
+export type DamageRoll = { type: 'damage', args: Parameters<typeof Scenario['damage']>[0] }
+export type CheckRoll = { type: 'check', args: Parameters<typeof Scenario['check']>[0] }
+export type DaggerheartCheckRoll = { type: 'daggerheartCheck', args: Parameters<typeof Scenario['daggerheartCheck']>[0] }
+export type AttackRoll = { type: 'attack', args: Parameters<typeof Scenario['attack']>[0] };
+export type SpellRoll = { type: 'spellWithSave', args: Parameters<typeof Scenario['spellWithSave']>[0] }
 
-type Step =
-  { type: 'and', combine: Combiner, roll: CustomRoll } |
-  { type: 'modify', modifier: number  } |
-  { type: 'against', difficulty: number  } |
-  { type: 'then', after: {
-      success?: { combine: Combiner, roll: CustomRoll },
-      failure?: { combine: Combiner, roll: CustomRoll },
-      criticalSuccess?: { combine: Combiner, roll: CustomRoll },
-      criticalFailure?: { combine: Combiner, roll: CustomRoll },
-    }
+export type Roll =
+  BasicRoll |
+  DamageRoll |
+  CheckRoll |
+  DaggerheartCheckRoll |
+  AttackRoll |
+  SpellRoll;
+
+export type AndStep = { type: 'and', combine: Combiner, roll: RollSequence };
+export type ModifyStep = { type: 'modify', modifier: number  };
+export type AgainstStep = { type: 'against', difficulty: number  };
+export type ThenStep = {
+  type: 'then',
+  after: {
+    success?: { combine: Combiner, roll: RollSequence },
+    failure?: { combine: Combiner, roll: RollSequence },
+    criticalSuccess?: { combine: Combiner, roll: RollSequence },
+    criticalFailure?: { combine: Combiner, roll: RollSequence },
   }
+}
 
-type CustomRoll = { initialRoll: InitialRoll, steps: Array<Step> };
+export type Step = AndStep | ModifyStep | AgainstStep | ThenStep;
 
-type RollOptions = {
-  criticalSuccess?: Array<number>,
-  criticalFailure?: Array<number>,
+export type RollSequence = { initialRoll: Roll, steps: Array<Step> };
+
+export type RollOptions = {
+  criticalSuccess?: number,
+  criticalFailure?: number,
   with?: 'hope' | 'fear',
 }
 
@@ -54,8 +65,8 @@ export class Scenario {
     const values = integers(1, die);
     return new Scenario(
       values.map((value) => {
-        const criticalSuccess = options.criticalSuccess?.includes(value);
-        const criticalFailure = options.criticalFailure?.includes(value);
+        const criticalSuccess = options.criticalSuccess && value >= options.criticalSuccess;
+        const criticalFailure = options.criticalFailure && value <= options.criticalFailure;
         return {
           value,
           p: 1 / die,
@@ -81,7 +92,7 @@ export class Scenario {
   }
 
   // a standard pool of dice summed together
-  static pool({ dice, modifier = 0 }: { dice: Dice, modifier?: number }) {
+  static damage({ dice, modifier = 0 }: { dice: Dice, modifier?: number }) {
     return this.rollDice({ dice, combine: 'sum' }).modify(modifier);
   }
 
@@ -91,7 +102,7 @@ export class Scenario {
     modifier: number,
     options?: { nat1s?: boolean; has?: 'advantage' | 'disadvantage'; }
   }) {
-    const crits = { criticalSuccess: [20], criticalFailure: options.nat1s ? [1] : undefined };
+    const crits = { criticalSuccess: 20, criticalFailure: options.nat1s ? 1 : undefined };
 
     return this.rollDie({ die: 20, options: crits })
       .then(options.has === 'advantage', this.rollDie({ die: 20, options: crits }), 'max')
@@ -126,8 +137,8 @@ export class Scenario {
     }
   ) {
     return this.check({ difficulty: armor, modifier, options })
-      .then((o) => (o.crit && o.success) ?? false, this.pool({ dice: [ ...damageDice, ...damageDice ], modifier: damageModifier }), 'setValue')
-      .then((o) => (!o.crit && o.success) ?? false, this.pool({ dice: damageDice, modifier: damageModifier }), 'setValue')
+      .then((o) => (o.crit && o.success) ?? false, this.damage({ dice: [ ...damageDice, ...damageDice ], modifier: damageModifier }), 'setValue')
+      .then((o) => (!o.crit && o.success) ?? false, this.damage({ dice: damageDice, modifier: damageModifier }), 'setValue')
       .then((o) => !o.success, new Scenario([{ value: 0, p: 1 }]), 'setValue')
       .condense()
   }
@@ -143,13 +154,13 @@ export class Scenario {
     return this.check({ difficulty: dc, modifier: saveModifier, options })
       .then(
         isFailure,
-        this.pool({ dice: damageDice, modifier: damageModifier }),
+        this.damage({ dice: damageDice, modifier: damageModifier }),
         'setValue',
       )
       .then(
         isSuccess,
         options.saveTakesHalf ?
-          this.pool({ dice: damageDice, modifier: damageModifier }) :
+          this.damage({ dice: damageDice, modifier: damageModifier }) :
           this.singleOutcome({ value: 0 }),
         'setHalf',
       )
@@ -157,14 +168,14 @@ export class Scenario {
   }
 
   // build a custom roll or sequence of rolls
-  static custom({ initialRoll: roll, steps }: CustomRoll) {
+  static custom({ initialRoll: roll, steps }: RollSequence) {
     let scenario: Scenario;
     switch (roll.type) {
       case 'basic':
         scenario = roll.args.die ? this.rollDie(roll.args) : this.rollDice(roll.args);
         break;
-      case 'pool':
-        scenario = this.pool(roll.args);
+      case 'damage':
+        scenario = this.damage(roll.args);
         break;
       case 'check':
         scenario = this.check(roll.args);

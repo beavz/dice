@@ -4,7 +4,7 @@ import { useState } from "react";
 import Button from "@/components/Button";
 import RollCard from "./RollCard";
 import ComparisonChart from "./ComparisonChart";
-import { createRoll, EMPTY_COUNTS, type Roll } from "./roll";
+import { createRoll, type Roll } from "./roll";
 import styles from "./page.module.scss";
 
 export default function Home() {
@@ -17,7 +17,7 @@ export default function Home() {
   }
 
   function addRoll() {
-    setRolls((current) => [...current, createRoll(EMPTY_COUNTS)]);
+    setRolls((current) => [...current, createRoll({})]);
   }
 
   function duplicateRoll(id: string) {

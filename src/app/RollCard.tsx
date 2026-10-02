@@ -17,6 +17,7 @@ import type { TooltipContentProps } from "recharts";
 import {
   colorForIndex,
   formatRollLabel,
+  getDiceOf,
   getRollDisplayName,
   getScenario,
   sortCategories,
@@ -140,9 +141,9 @@ export default function RollCard({
   const label = formatRollLabel(roll);
   const { initialRoll } = roll;
   const activeSides =
-    initialRoll.kind === "regular"
-      ? DICE.filter((sides) => initialRoll.counts[sides] > 0)
-      : initialRoll.kind === "check"
+    initialRoll.type === "basic"
+      ? DICE.filter((sides) => getDiceOf(initialRoll).includes(sides))
+      : initialRoll.type === "check"
         ? ([20] as const)
         : ([12] as const);
 
@@ -152,9 +153,9 @@ export default function RollCard({
         <div className={styles.rollConfig}>
           <div className={styles.rollHeader}>
             <h2 className={styles.rollTitle}>
-              {roll.initialRoll.kind === "attack" ? (
+              {roll.initialRoll.type === "attack" ? (
                 <SwordIcon className={styles.rollIcon} />
-              ) : roll.initialRoll.kind === "spellSave" ? (
+              ) : roll.initialRoll.type === "spellWithSave" ? (
                 <WizardHatIcon className={styles.rollIcon} />
               ) : (
                 activeSides.map((sides) => (
@@ -195,7 +196,7 @@ export default function RollCard({
             onChange={(name) => onChange({ ...roll, name })}
           />
 
-          <RollSequence roll={roll} onChange={onChange} />
+          <RollSequence rollSequence={roll} onChange={onChange} />
         </div>
 
         <div className={styles.rollCharts}>

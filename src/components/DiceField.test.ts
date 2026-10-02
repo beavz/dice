@@ -1,11 +1,11 @@
-import { EMPTY_COUNTS } from "@/app/roll";
 import { type Die, DICE } from '@/lib/dice';
 import { parseRollExpression } from "./DiceField";
 
+const EMPTY_COUNTS = {};
 function counts(
   overrides: Partial<Record<Die, number>>,
 ) {
-  return { ...EMPTY_COUNTS, ...overrides };
+  return { ...overrides };
 }
 
 describe("parseRollExpression", () => {

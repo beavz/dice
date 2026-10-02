@@ -14,27 +14,28 @@ $white: #ffffff;
 $graphite: #2c2c2a;
 $iron-gray: #383835;
 
-// Categorical series + status — mode-invariant
-$green: #008300;
+// Status — mode-invariant
 $crimson: #d03b3b;
 
 // Categorical series — light mode
 $blue: #2a78d6;
-$magenta: #e87ba4;
-$amber: #eda100;
-$aqua: #1baf7a;
-$orange: #eb6834;
+$green: #1e8e5a;
 $violet: #4a3aa7;
-$red: #e34948;
+$teal: #1baf7a;
+$indigo: #4455c7;
+$purple: #7a52c9;
+$sky-blue: #3fa0c9;
+$periwinkle: #5b6fd6;
 
 // Categorical series — dark mode
-$sky-blue: #3987e5;
-$rose: #d55181;
-$ochre: #c98500;
-$teal: #199e70;
-$burnt-orange: #d95926;
+$sky-blue-dark: #3987e5;
+$green-dark: #3ecb70;
 $lavender: #9085e9;
-$coral: #e66767;
+$teal-dark: #2bd499;
+$indigo-dark: #6f7ee8;
+$purple-dark: #a06fe0;
+$cyan-dark: #5fc2e0;
+$periwinkle-dark: #7f8ff0;
 
 :root {
   color-scheme: light;
@@ -47,12 +48,12 @@ $coral: #e66767;
   --baseline: #{$ash-gray};
   --series-1: #{$blue};
   --series-2: #{$green};
-  --series-3: #{$magenta};
-  --series-4: #{$amber};
-  --series-5: #{$aqua};
-  --series-6: #{$orange};
-  --series-7: #{$violet};
-  --series-8: #{$red};
+  --series-3: #{$violet};
+  --series-4: #{$teal};
+  --series-5: #{$sky-blue};
+  --series-6: #{$purple};
+  --series-7: #{$indigo};
+  --series-8: #{$periwinkle};
   --critical: #{$crimson};
   --border-hairline: rgba(11, 11, 11, 0.1);
 }
@@ -67,14 +68,14 @@ $coral: #e66767;
     --text-muted: #{$dusty-gray};
     --gridline: #{$graphite};
     --baseline: #{$iron-gray};
-    --series-1: #{$sky-blue};
-    --series-2: #{$green};
-    --series-3: #{$rose};
-    --series-4: #{$ochre};
-    --series-5: #{$teal};
-    --series-6: #{$burnt-orange};
-    --series-7: #{$lavender};
-    --series-8: #{$coral};
+    --series-1: #{$sky-blue-dark};
+    --series-2: #{$green-dark};
+    --series-3: #{$lavender};
+    --series-4: #{$teal-dark};
+    --series-5: #{$cyan-dark};
+    --series-6: #{$purple-dark};
+    --series-7: #{$indigo-dark};
+    --series-8: #{$periwinkle-dark};
     --critical: #{$crimson};
     --border-hairline: rgba(255, 255, 255, 0.1);
   }
