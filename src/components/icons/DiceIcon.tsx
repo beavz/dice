@@ -1,4 +1,4 @@
-import { DICE, Die } from "@/lib/dice";
+import { Die } from "@/lib/dice";
 
 type DiceIconProps = {
   sides: Die;

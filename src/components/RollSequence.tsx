@@ -1,20 +1,9 @@
 "use client";
 
-import {
-  Checkbox,
-  Menu,
-  MenuItem,
-  MenuTrigger,
-  Popover,
-} from "react-aria-components";
+import { Checkbox } from "react-aria-components";
 import Button from "@/components/core/Button";
-import SelectField, {
-  type SelectFieldOption,
-} from "@/components/core/SelectField";
-import {
-  createAndStep,
-  createThenStep,
-} from "@/app/roll";
+import MenuButton from "@/components/core/MenuButton";
+import SelectField, { type SelectFieldOption } from "@/components/core/SelectField";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
   type Roll,
@@ -30,9 +19,6 @@ import {
 } from "@/lib/roll";
 import {
   type AndStep,
-  type ThenStep,
-  type AgainstStep,
-  type ModifyStep,
   type Step,
   type RollSequence as RollSequenceType,
 } from "@/lib/rollSequence";
@@ -40,7 +26,6 @@ import CloseIcon from "@/components/icons/CloseIcon";
 import DiceField, {
   countsFromDice,
   getDice,
-  totalDice,
 } from "@/components/DiceField";
 import NumberField from "@/components/core/NumberField";
 import RadioGroupField from "@/components/core/RadioGroupField";
@@ -90,13 +75,6 @@ function AndStep({ step, onChange, onRemove }: AndStepProps) {
     </>
   );
 }
-
-const THEN_BRANCH_KINDS = [
-  "success",
-  "failure",
-  "criticalSuccess",
-  "criticalFailure",
-] as const;
 
 const ROLL_KIND_OPTIONS: SelectFieldOption<Roll["type"]>[] = [
   { value: "basic", label: "Basic" },
@@ -229,40 +207,29 @@ type AddStepProps = {
 function AddStep({ onSelect }: AddStepProps) {
   function addStep(type: Step["type"]) {
     const step: Step =
-      type === "modify"
-        ? { type: "modify", modifier: 1 }
-        : type === "against"
-          ? { type: "against", difficulty: 15 }
-          : type === "and"
-            ? createAndStep()
-            : createThenStep();
+      type === "modify" ? { type: "modify", modifier: 1 } :
+      type === "against" ? { type: "against", difficulty: 15 } :
+      type === "then" ? { type: 'then', after: {} } :
+      { type: "and",
+        combine: "sum",
+        roll: { initialRoll: initializeRoll('basic'), steps: [] },
+      };
+
     onSelect(step);
   }
 
   return (
     <div className={styles.customStepActions}>
-      <MenuTrigger>
-        <Button>+ Add step</Button>
-        <Popover className={styles.kindSelectPopover}>
-          <Menu
-            onAction={(key) => addStep(key as Step["type"])}
-            className={styles.kindSelectList}
-          >
-            <MenuItem id="modify" className={styles.kindSelectItem}>
-              Modify
-            </MenuItem>
-            <MenuItem id="evaluate" className={styles.kindSelectItem}>
-              Evaluate
-            </MenuItem>
-            <MenuItem id="and" className={styles.kindSelectItem}>
-              And
-            </MenuItem>
-            <MenuItem id="then" className={styles.kindSelectItem}>
-              Then
-            </MenuItem>
-          </Menu>
-        </Popover>
-      </MenuTrigger>
+      <MenuButton<Step["type"]>
+        label="+ Add step"
+        items={[
+          { id: "modify", label: "Modify" },
+          { id: "against", label: "Evaluate" },
+          { id: "and", label: "And" },
+          { id: "then", label: "Then" },
+        ]}
+        onAction={addStep}
+      />
     </div>
   );
 }

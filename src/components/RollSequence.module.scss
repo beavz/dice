@@ -3,39 +3,6 @@
   flex-direction: column;
 }
 
-.kindSelectPopover {
-  background: var(--surface-1);
-  border: 1px solid var(--border-hairline);
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  min-width: var(--trigger-width);
-}
-
-.kindSelectList {
-  padding: 4px;
-  outline: none;
-}
-
-.kindSelectItem {
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  outline: none;
-
-  &[data-focused],
-  &[data-focus-visible] {
-    background: var(--series-1);
-    color: var(--text-primary);
-  }
-
-  &[data-selected] {
-    color: var(--text-primary);
-    font-weight: 600;
-  }
-}
-
 .checkFields {
   display: flex;
   flex-wrap: wrap;

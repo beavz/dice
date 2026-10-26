@@ -1,4 +1,4 @@
-import { type Die, DICE } from "@/lib/dice";
+import { type Die } from "@/lib/dice";
 import { parseRollExpression } from "./DiceField";
 
 const EMPTY_COUNTS = {};

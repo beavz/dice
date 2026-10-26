@@ -3,20 +3,17 @@ import {
   label,
   isFailure,
   isSuccess,
-  isCriticalSuccess,
   Combiner,
   getCombiner,
   incrementalVersion,
 } from "./outcome";
 import type {
   RollOptions,
-  BasicRoll,
   DamageRoll,
   CheckRoll,
   DaggerheartCheckRoll,
   AttackRoll,
   SpellRoll,
-  Roll,
 } from "./roll";
 import type { Die, Dice } from "./dice";
 import type { Step, RollSequence } from "./rollSequence";
