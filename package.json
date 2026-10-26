@@ -9,6 +9,7 @@
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
     "test": "jest",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
