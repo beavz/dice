@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -11,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { colorForIndex } from "@/app/roll";
+import { colorForIndex, sortCategories, type DistributionPoint } from "@/app/roll";
 import styles from "./CategoricalOutcomeDistributionChart.module.scss";
 
 function OutcomeTooltip({ active, payload }: TooltipContentProps) {
@@ -35,12 +36,26 @@ function OutcomeTooltip({ active, payload }: TooltipContentProps) {
 }
 
 type CategoricalOutcomeDistributionChartProps = {
-  data: Array<{ label: string; p: number }>;
+  distribution: DistributionPoint[];
 };
 
 export default function CategoricalOutcomeDistributionChart({
-  data,
+  distribution,
 }: CategoricalOutcomeDistributionChartProps) {
+  const data = useMemo(() => {
+    const categories = sortCategories([
+      ...new Set(distribution.map((d) => d.label)),
+    ]);
+    return categories.map((label) => ({
+      label,
+      p: distribution
+        .filter((d) => d.label === label)
+        .reduce((total, d) => total + d.p, 0),
+    }));
+  }, [distribution]);
+
+  if (data.length <= 1) return null;
+
   return (
     <div className={styles.card}>
       <h3 className={styles.sectionLabel}>Outcome likelihood</h3>

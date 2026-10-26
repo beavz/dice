@@ -6,7 +6,6 @@ import {
   getDiceOf,
   getRollDisplayName,
   getDistributionBuilder,
-  sortCategories,
   type Roll,
 } from "./roll";
 import { DICE } from '@/lib/dice';
@@ -20,8 +19,6 @@ import SwordIcon from "@/components/icons/SwordIcon";
 import WizardHatIcon from "@/components/icons/WizardHatIcon";
 import RollSequence from "@/components/RollSequence";
 import styles from "./page.module.scss";
-
-type ChartRow = { value: number } & Record<string, number | undefined>;
 
 type RollCardProps = {
   index: number;
@@ -47,32 +44,6 @@ export default function RollCard({
       expectedValue: builder.expectedValue(),
     }
   }, [roll]);
-
-  const categories = useMemo(
-    () => sortCategories([...new Set(distribution.map((d) => d.label))]),
-    [distribution],
-  );
-
-  const outcomeSummary = useMemo(
-    () =>
-      categories.map((label) => ({
-        label,
-        p: distribution
-          .filter((d) => d.label === label)
-          .reduce((total, d) => total + d.p, 0),
-      })),
-    [categories, distribution],
-  );
-
-  const chartData = useMemo(() => {
-    const byValue = new Map<number, ChartRow>();
-    for (const { value, label, p } of distribution) {
-      const row = byValue.get(value) ?? { value };
-      row[label] = (row[label] ?? 0) + p;
-      byValue.set(value, row);
-    }
-    return Array.from(byValue.values()).sort((a, b) => a.value - b.value);
-  }, [distribution]);
 
   const label = formatRollLabel(roll);
   const { initialRoll } = roll;
@@ -137,14 +108,11 @@ export default function RollCard({
 
         <div className={styles.rollCharts}>
           <OutcomeDistributionChart
-            data={chartData}
-            categories={categories}
+            distribution={distribution}
             expectedValue={expectedValue}
           />
 
-          {categories.length > 1 && (
-            <CategoricalOutcomeDistributionChart data={outcomeSummary} />
-          )}
+          <CategoricalOutcomeDistributionChart distribution={distribution} />
         </div>
       </div>
     </section>

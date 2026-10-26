@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -12,7 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { colorForIndex } from "@/app/roll";
+import { colorForIndex, sortCategories, type DistributionPoint } from "@/app/roll";
 import styles from "./OutcomeDistributionChart.module.scss";
 
 type ChartRow = { value: number } & Record<string, number | undefined>;
@@ -50,16 +51,29 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
 }
 
 type OutcomeDistributionChartProps = {
-  data: ChartRow[];
-  categories: string[];
+  distribution: DistributionPoint[];
   expectedValue: number;
 };
 
 export default function OutcomeDistributionChart({
-  data,
-  categories,
+  distribution,
   expectedValue,
 }: OutcomeDistributionChartProps) {
+  const categories = useMemo(
+    () => sortCategories([...new Set(distribution.map((d) => d.label))]),
+    [distribution],
+  );
+
+  const data = useMemo(() => {
+    const byValue = new Map<number, ChartRow>();
+    for (const { value, label, p } of distribution) {
+      const row = byValue.get(value) ?? { value };
+      row[label] = (row[label] ?? 0) + p;
+      byValue.set(value, row);
+    }
+    return Array.from(byValue.values()).sort((a, b) => a.value - b.value);
+  }, [distribution]);
+
   return (
     <div className={styles.card}>
       {data.length > 0 ? (
