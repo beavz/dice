@@ -19,7 +19,7 @@ import {
   getRollDisplayName,
   getDistributionBuilder,
   sortCategories,
-  type Roll,
+  type ExampleSequence,
 } from "@/app/roll";
 import CategoricalComparisonChart from "./CategoricalComparisonChart";
 import styles from "./ComparisonChart.module.scss";
@@ -56,7 +56,7 @@ function ComparisonTooltip({ active, payload, label }: TooltipContentProps) {
 }
 
 type ComparisonChartProps = {
-  rolls: Roll[];
+  rolls: ExampleSequence[];
 };
 
 export default function ComparisonChart({ rolls }: ComparisonChartProps) {

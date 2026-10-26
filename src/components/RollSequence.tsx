@@ -14,12 +14,7 @@ import {
   createThenStep,
   withInitialRollKind,
   type CombineAction,
-  type AndStep,
-  type ThenStep,
-  type AgainstStep,
-  type ModifyStep,
-  type Step,
-  type Roll as AppRoll,
+  type ExampleSequence as AppRoll,
 } from "@/app/roll";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
@@ -31,6 +26,11 @@ import {
   type DaggerheartCheckRoll,
   type DamageRoll,
   type SpellRoll,
+  type AndStep,
+  type ThenStep,
+  type AgainstStep,
+  type ModifyStep,
+  type Step,
 } from "@/lib/dice";
 import CloseIcon from "@/components/icons/CloseIcon";
 import DiceField, { countsFromDice, getDice, totalDice } from "@/components/DiceField";
@@ -192,22 +192,22 @@ function StepList({ steps, onChange }: StepListProps) {
     onChange([ ...steps, step ]);
   }
 
-  function removeStep(id: string) {
-    onChange(steps.filter((step) => step.id !== id));
+  function removeStep(index: number) {
+    onChange(steps.filter((_, i) => i !== index));
   }
 
-  function updateStep(id: string, updated: Step) {
-    onChange(steps.map((step) => (step.id === id ? updated : step)));
+  function updateStep(index: number, updated: Step) {
+    onChange(steps.map((step, i) => (i === index ? updated : step)));
   }
 
   return (
     <>
-      {steps.map((step) => (
+      {steps.map((step, index) => (
         <StepNode
-          key={step.id}
+          key={index}
           step={step}
-          onChange={(updated) => step.id && updateStep(step.id, updated)}
-          onRemove={() => step.id && removeStep(step.id)}
+          onChange={(updated) => updateStep(index, updated)}
+          onRemove={() => removeStep(index)}
         />
       ))}
 
@@ -223,9 +223,9 @@ function AddStep({ onSelect }: AddStepProps) {
   function addStep(type: Step["type"]) {
     const step: Step =
       type === "modify"
-        ? { id: crypto.randomUUID(), type: "modify", modifier: 1 }
+        ? { type: "modify", modifier: 1 }
         : type === "against"
-          ? { id: crypto.randomUUID(), type: "against", difficulty: 15 }
+          ? { type: "against", difficulty: 15 }
           : type === "and"
             ? createAndStep()
             : createThenStep()

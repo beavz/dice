@@ -6,7 +6,7 @@ import {
   getDiceOf,
   getRollDisplayName,
   getDistributionBuilder,
-  type Roll,
+  type ExampleSequence,
 } from "./roll";
 import { DICE } from '@/lib/dice';
 import Button from "@/components/core/Button";
@@ -22,8 +22,8 @@ import styles from "./page.module.scss";
 
 type RollCardProps = {
   index: number;
-  roll: Roll;
-  onChange: (roll: Roll) => void;
+  roll: ExampleSequence;
+  onChange: (roll: ExampleSequence) => void;
   onDuplicate: () => void;
   onRemove: () => void;
   canRemove: boolean;

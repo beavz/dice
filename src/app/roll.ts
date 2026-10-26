@@ -1,18 +1,16 @@
 import {
   DistributionBuilder, type Die,
-  type Roll as BaseRoll,
+  type Roll,
   type BasicRoll,
   type DamageRoll,
   type CheckRoll,
   type DaggerheartCheckRoll,
   type AttackRoll,
   type SpellRoll,
-  type AndStep as BasicAndStep,
-  type ThenStep as BasicThenStep,
-  type ModifyStep as BasicModifyStep,
-  type AgainstStep as BasicAgainstStep,
-  type Step as BaseStep,
-  type RollSequence as BaseRollSequence,
+  type AndStep,
+  type ThenStep,
+  type Step,
+  type RollSequence,
   type RollOptions,
 } from "@/lib/dice";
 import { getCombiner, type Combiner } from "@/lib/outcome";
@@ -75,36 +73,27 @@ const ROLLS = {
     initialize: () => ({ type: "spellWithSave", args: { dc: 14, damageDice: [12, 12] } }),
     expression: (roll: any) => '',
   },
-} satisfies Record<BaseRoll['type'], { initialize: () => BaseRoll, expression?: any }>;
+} satisfies Record<Roll['type'], { initialize: () => Roll, expression?: any }>;
 
-function createInitialRoll(type: BaseRoll["type"]): BaseRoll {
+function createInitialRoll(type: Roll["type"]): Roll {
   return ROLLS[type].initialize();
 }
 
-export type ModifyStep = { id?: string; } & BasicModifyStep;
-export type AndStep = { id?: string } & BasicAndStep;
-export type ThenStep = { id?: string } & BasicThenStep;
-export type AgainstStep = { id?: string } & BasicAgainstStep;
-
-export type Step = BaseStep & { id?: string };
-
-export type Roll = {
+export type ExampleSequence = {
   name: string;
-  initialRoll: BaseRoll;
+  initialRoll: Roll;
   steps: Step[];
 };
 
 export function createThenStep(): ThenStep {
   return {
-    id: crypto.randomUUID(),
     type: 'then',
     after: {},
   };
 }
 
 export function createAndStep(): AndStep {
-  return { 
-    id: crypto.randomUUID(),
+  return {
     type: 'and',
     combine: 'sum',
     roll: {
@@ -114,7 +103,7 @@ export function createAndStep(): AndStep {
   };
 }
 
-export function createRoll(counts: Counts = { 20: 1 }): Roll {
+export function createRoll(counts: Counts = { 20: 1 }): ExampleSequence {
   return {
     name: "",
     initialRoll: { type: "basic", args: { dice: getDice(counts), combine: "sum" } },
@@ -122,9 +111,9 @@ export function createRoll(counts: Counts = { 20: 1 }): Roll {
   };
 }
 
-export function withInitialRollKind<T extends { initialRoll: BaseRoll }>(
+export function withInitialRollKind<T extends { initialRoll: Roll }>(
   roll: T,
-  type: BaseRoll["type"],
+  type: Roll["type"],
 ): T {
   if (roll.initialRoll.type === type) return roll;
   return { ...roll, initialRoll: createInitialRoll(type) };
@@ -213,7 +202,7 @@ function formatSpellSaveExpression(roll: SpellRoll): string {
   return parts.join(" ") + suffix;
 }
 
-function formatInitialRollExpression(initialRoll: BaseRoll): string {
+function formatInitialRollExpression(initialRoll: Roll): string {
   switch (initialRoll.type) {
     case "basic":
       return formatBasicExpression(initialRoll);
@@ -230,17 +219,17 @@ function formatInitialRollExpression(initialRoll: BaseRoll): string {
   }
 }
 
-export function getRollDisplayName(roll: Roll, index: number): string {
+export function getRollDisplayName(roll: ExampleSequence, index: number): string {
   return roll.name.trim() || `Roll ${index + 1}`;
 }
 
-export function formatRollLabel(roll: Roll): string {
+export function formatRollLabel(roll: ExampleSequence): string {
   return 'Custom roll sequence';
 }
 
 export type DistributionPoint = { value: number; label: string; p: number };
 
-export function getDistributionBuilder(roll: BaseRollSequence): DistributionBuilder {
+export function getDistributionBuilder(roll: RollSequence): DistributionBuilder {
   return DistributionBuilder.custom(roll)
 }
 
