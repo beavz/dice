@@ -25,3 +25,7 @@ hidden dependency on `src/app`'s stylesheets.
 
 `src/app/*.tsx` files (page-level components) are not held to this rule; they
 may keep using their colocated `page.module.scss`-style files as before.
+
+# Checks
+
+ensure that code typechecks, lints, and is properly formatted before committing.
