@@ -9,11 +9,11 @@ export type BasicRoll = {
   args: { die: Die; dice?: never, options?: RollOptions } |
   { dice: Dice; die?: never, options?: RollOptions, combine: Combiner }
 }
-export type DamageRoll = { type: 'damage', args: Parameters<typeof Scenario['damage']>[0] }
-export type CheckRoll = { type: 'check', args: Parameters<typeof Scenario['check']>[0] }
-export type DaggerheartCheckRoll = { type: 'daggerheartCheck', args: Parameters<typeof Scenario['daggerheartCheck']>[0] }
-export type AttackRoll = { type: 'attack', args: Parameters<typeof Scenario['attack']>[0] };
-export type SpellRoll = { type: 'spellWithSave', args: Parameters<typeof Scenario['spellWithSave']>[0] }
+export type DamageRoll = { type: 'damage', args: Parameters<typeof DistributionBuilder['damage']>[0] }
+export type CheckRoll = { type: 'check', args: Parameters<typeof DistributionBuilder['check']>[0] }
+export type DaggerheartCheckRoll = { type: 'daggerheartCheck', args: Parameters<typeof DistributionBuilder['daggerheartCheck']>[0] }
+export type AttackRoll = { type: 'attack', args: Parameters<typeof DistributionBuilder['attack']>[0] };
+export type SpellRoll = { type: 'spellWithSave', args: Parameters<typeof DistributionBuilder['spellWithSave']>[0] }
 
 export type Roll =
   BasicRoll |
@@ -46,7 +46,7 @@ export type RollOptions = {
   with?: 'hope' | 'fear',
 }
 
-export class Scenario {
+export class DistributionBuilder {
   private data: Array<Outcome & { p: number }>;
 
   protected constructor(data: Array<Outcome & { p: number }>) {
@@ -63,7 +63,7 @@ export class Scenario {
 
   static rollDie({ die, options = {} }: { die: Die, options?: RollOptions }) {
     const values = integers(1, die);
-    return new Scenario(
+    return new DistributionBuilder(
       values.map((value) => {
         const criticalSuccess = options.criticalSuccess && value >= options.criticalSuccess;
         const criticalFailure = options.criticalFailure && value <= options.criticalFailure;
@@ -78,8 +78,8 @@ export class Scenario {
     ));
   }
 
-  static rollDice({ dice: [ first, ...rest ], combine, options = {} }: { dice: Dice, combine: Combiner, options?: RollOptions }): Scenario {
-    if (!first) return new Scenario([]);
+  static rollDice({ dice: [ first, ...rest ], combine, options = {} }: { dice: Dice, combine: Combiner, options?: RollOptions }): DistributionBuilder {
+    if (!first) return new DistributionBuilder([]);
 
     return this.rollDie({ die: first, options }).and(
       rest.map((die) => this.rollDie({ die, options })),
@@ -88,7 +88,7 @@ export class Scenario {
   }
 
   static singleOutcome(o: Outcome) {
-    return new Scenario([{ ...o, p: 1 }]);
+    return new DistributionBuilder([{ ...o, p: 1 }]);
   }
 
   // a standard pool of dice summed together
@@ -139,7 +139,7 @@ export class Scenario {
     return this.check({ difficulty: armor, modifier, options })
       .then((o) => (o.crit && o.success) ?? false, this.damage({ dice: [ ...damageDice, ...damageDice ], modifier: damageModifier }), 'setValue')
       .then((o) => (!o.crit && o.success) ?? false, this.damage({ dice: damageDice, modifier: damageModifier }), 'setValue')
-      .then((o) => !o.success, new Scenario([{ value: 0, p: 1 }]), 'setValue')
+      .then((o) => !o.success, new DistributionBuilder([{ value: 0, p: 1 }]), 'setValue')
       .condense()
   }
 
@@ -169,53 +169,53 @@ export class Scenario {
 
   // build a custom roll or sequence of rolls
   static custom({ initialRoll: roll, steps }: RollSequence) {
-    let scenario: Scenario;
+    let builder: DistributionBuilder;
     switch (roll.type) {
       case 'basic':
-        scenario = roll.args.die ? this.rollDie(roll.args) : this.rollDice(roll.args);
+        builder = roll.args.die ? this.rollDie(roll.args) : this.rollDice(roll.args);
         break;
       case 'damage':
-        scenario = this.damage(roll.args);
+        builder = this.damage(roll.args);
         break;
       case 'check':
-        scenario = this.check(roll.args);
+        builder = this.check(roll.args);
         break;
       case 'daggerheartCheck':
-        scenario = this.daggerheartCheck(roll.args);
+        builder = this.daggerheartCheck(roll.args);
         break;
       case 'attack':
-        scenario = this.attack(roll.args);
+        builder = this.attack(roll.args);
         break;
       case 'spellWithSave':
-        scenario = this.spellWithSave(roll.args);
+        builder = this.spellWithSave(roll.args);
         break;
       default:
         assertNever(roll);
         throw new Error('unexpected roll type');
     }
 
-    return steps.reduce((scenario: Scenario, step: Step): Scenario => {
+    return steps.reduce((builder: DistributionBuilder, step: Step): DistributionBuilder => {
       switch (step.type) {
         case 'and':
-          return scenario.and(Scenario.custom(step.roll), step.combine)
+          return builder.and(DistributionBuilder.custom(step.roll), step.combine)
         case 'modify':
-          return scenario.modify(step.modifier);
+          return builder.modify(step.modifier);
         case 'against':
-          return scenario.evaluate(step.difficulty);
+          return builder.evaluate(step.difficulty);
         case 'then': {
           const { success, failure, criticalSuccess, criticalFailure } = step.after;
-          if (success) scenario.then((o) => o.success === true, Scenario.custom(success.roll), success.combine)
-          if (failure) scenario.then((o) => !o.success, Scenario.custom(failure.roll), failure.combine)
-          if (criticalSuccess) scenario.then((o) => o.success === true && o.crit === true, Scenario.custom(criticalSuccess.roll), criticalSuccess.combine)
-          if (criticalFailure) scenario.then((o) => !o.success && o.crit === true, Scenario.custom(criticalFailure.roll), criticalFailure.combine,)
-          return scenario;
+          if (success) builder.then((o) => o.success === true, DistributionBuilder.custom(success.roll), success.combine)
+          if (failure) builder.then((o) => !o.success, DistributionBuilder.custom(failure.roll), failure.combine)
+          if (criticalSuccess) builder.then((o) => o.success === true && o.crit === true, DistributionBuilder.custom(criticalSuccess.roll), criticalSuccess.combine)
+          if (criticalFailure) builder.then((o) => !o.success && o.crit === true, DistributionBuilder.custom(criticalFailure.roll), criticalFailure.combine,)
+          return builder;
         }
       }
-    }, scenario);
+    }, builder);
   }
 
-  private and(other: Scenario | Array<Scenario>, combine: Combiner) {
-    const others = other instanceof Scenario ? [ other ] : other;
+  private and(other: DistributionBuilder | Array<DistributionBuilder>, combine: Combiner) {
+    const others = other instanceof DistributionBuilder ? [ other ] : other;
     if (others.length < 1) return this;
 
     const combiner = getCombiner(combine);
@@ -227,7 +227,7 @@ export class Scenario {
   }
 
   // combine outcomes two at a time
-  private _andIncremental(other: Scenario, combine: (a: Outcome, b: Outcome) => Outcome) {
+  private _andIncremental(other: DistributionBuilder, combine: (a: Outcome, b: Outcome) => Outcome) {
     this.data = this.data
       .map((x) => other.data.map((y) => ({ ...combine(x, y), p: x.p * y.p })))
       .flat();
@@ -236,7 +236,7 @@ export class Scenario {
   }
 
   // combine outcomes that must be combined all at once, ie: dropping the lowest value or taking the average
-  private _andAllTogether(others: Array<Scenario>, combine: (o: Array<Outcome>) => Outcome) {
+  private _andAllTogether(others: Array<DistributionBuilder>, combine: (o: Array<Outcome>) => Outcome) {
     this.data = [
       this.data, ...others.map(s => s.data)
     ]
@@ -254,7 +254,7 @@ export class Scenario {
     return this.condense();
   }
 
-  private then(check: boolean | ((o: Outcome) => boolean), next: Scenario, combine: Combiner) {
+  private then(check: boolean | ((o: Outcome) => boolean), next: DistributionBuilder, combine: Combiner) {
     if (check === false) return this;
     if (check === true) return this.and(next, combine);
 
@@ -279,7 +279,7 @@ export class Scenario {
   }
 
 
-  private condense(): Scenario {
+  private condense(): DistributionBuilder {
     // this merges equivalent outcomes
 
     const compare = (a: Outcome, b: Outcome) =>
@@ -300,7 +300,7 @@ export class Scenario {
         }
         return a;
       },
-      [] as Scenario["data"],
+      [] as DistributionBuilder["data"],
     );
 
     return this;

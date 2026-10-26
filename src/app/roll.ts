@@ -1,5 +1,5 @@
 import {
-  Scenario, type Die,
+  DistributionBuilder, type Die,
   type Roll as BaseRoll,
   type BasicRoll,
   type DamageRoll,
@@ -89,7 +89,6 @@ export type AgainstStep = { id?: string } & BasicAgainstStep;
 export type Step = BaseStep & { id?: string };
 
 export type Roll = {
-  id: string;
   name: string;
   initialRoll: BaseRoll;
   steps: Step[];
@@ -117,7 +116,6 @@ export function createAndStep(): AndStep {
 
 export function createRoll(counts: Counts = { 20: 1 }): Roll {
   return {
-    id: crypto.randomUUID(),
     name: "",
     initialRoll: { type: "basic", args: { dice: getDice(counts), combine: "sum" } },
     steps: [],
@@ -242,8 +240,8 @@ export function formatRollLabel(roll: Roll): string {
 
 export type DistributionPoint = { value: number; label: string; p: number };
 
-export function getScenario(roll: BaseRollSequence): Scenario {
-  return Scenario.custom(roll)
+export function getDistributionBuilder(roll: BaseRollSequence): DistributionBuilder {
+  return DistributionBuilder.custom(roll)
 }
 
 export function getDiceOf(initialRoll: BasicRoll): Die[] {

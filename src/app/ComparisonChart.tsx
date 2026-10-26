@@ -19,7 +19,7 @@ import {
   colorForIndex,
   formatRollLabel,
   getRollDisplayName,
-  getScenario,
+  getDistributionBuilder,
   sortCategories,
   type Roll,
 } from "./roll";
@@ -88,15 +88,15 @@ type ComparisonChartProps = {
 export default function ComparisonChart({ rolls }: ComparisonChartProps) {
   const { data, series, outcomeCategories, outcomeData } = useMemo(() => {
     const series = rolls.map((roll, index) => {
-      const scenario = getScenario(roll);
+      const builder = getDistributionBuilder(roll);
       return {
-        id: roll.id,
+        id: index,
         label: roll.name.trim()
           ? getRollDisplayName(roll, index)
           : formatRollLabel(roll) || getRollDisplayName(roll, index),
         color: colorForIndex(index),
-        distribution: scenario.result(),
-        expectedValue: scenario.expectedValue(),
+        distribution: builder.result(),
+        expectedValue: builder.expectedValue(),
       };
     });
 

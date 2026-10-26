@@ -1,4 +1,4 @@
-import { Scenario } from './dice';
+import { DistributionBuilder } from './dice';
 
-describe("Scenario", () => {
+describe("DistributionBuilder", () => {
 });

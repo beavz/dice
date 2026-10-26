@@ -19,7 +19,7 @@ import {
   formatRollLabel,
   getDiceOf,
   getRollDisplayName,
-  getScenario,
+  getDistributionBuilder,
   sortCategories,
   type Roll,
 } from "./roll";
@@ -105,10 +105,10 @@ export default function RollCard({
   canRemove,
 }: RollCardProps) {
   const { distribution, expectedValue } = useMemo(() => {
-    const scenario = getScenario(roll);
+    const builder = getDistributionBuilder(roll);
     return {
-      distribution: scenario.result(),
-      expectedValue: scenario.expectedValue(),
+      distribution: builder.result(),
+      expectedValue: builder.expectedValue(),
     }
   }, [roll]);
 

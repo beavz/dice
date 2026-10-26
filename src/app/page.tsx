@@ -10,9 +10,9 @@ import styles from "./page.module.scss";
 export default function Home() {
   const [rolls, setRolls] = useState<Roll[]>([createRoll()]);
 
-  function updateRoll(updated: Roll) {
+  function updateRoll(index: number, updated: Roll) {
     setRolls((current) =>
-      current.map((roll) => (roll.id === updated.id ? updated : roll)),
+      current.map((roll, i) => (i === index ? updated : roll)),
     );
   }
 
@@ -20,22 +20,16 @@ export default function Home() {
     setRolls((current) => [...current, createRoll({})]);
   }
 
-  function duplicateRoll(id: string) {
-    setRolls((current) => {
-      const index = current.findIndex((roll) => roll.id === id);
-      if (index === -1) return current;
-
-      const duplicate = { ...current[index], id: crypto.randomUUID() };
-      return [
-        ...current.slice(0, index + 1),
-        duplicate,
-        ...current.slice(index + 1),
-      ];
-    });
+  function duplicateRoll(index: number) {
+    setRolls((current) => [
+      ...current.slice(0, index + 1),
+      current[index],
+      ...current.slice(index + 1),
+    ]);
   }
 
-  function removeRoll(id: string) {
-    setRolls((current) => current.filter((roll) => roll.id !== id));
+  function removeRoll(index: number) {
+    setRolls((current) => current.filter((_, i) => i !== index));
   }
 
   return (
@@ -47,12 +41,12 @@ export default function Home() {
 
       {rolls.map((roll, index) => (
         <RollCard
-          key={roll.id}
+          key={index}
           index={index}
           roll={roll}
-          onChange={updateRoll}
-          onDuplicate={() => duplicateRoll(roll.id)}
-          onRemove={() => removeRoll(roll.id)}
+          onChange={(updated) => updateRoll(index, updated)}
+          onDuplicate={() => duplicateRoll(index)}
+          onRemove={() => removeRoll(index)}
           canRemove={rolls.length > 1}
         />
       ))}
