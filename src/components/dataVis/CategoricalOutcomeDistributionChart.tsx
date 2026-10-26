@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { type CategorizedOutcomeDistribution } from "@/lib/DistributionBuilder";
+import { type CategorizedOutcomeDistribution } from "@/lib/outcomeDistribution";
 import { colorForIndex, sortCategories } from "@/app/roll";
 import styles from "./CategoricalOutcomeDistributionChart.module.scss";
 

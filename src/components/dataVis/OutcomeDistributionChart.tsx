@@ -15,7 +15,7 @@ import {
 import {
   expectedValue as getExpectedValue,
   type CategorizedOutcomeDistribution,
-} from "@/lib/DistributionBuilder";
+} from "@/lib/outcomeDistribution";
 import type { TooltipContentProps } from "recharts";
 import { colorForIndex, sortCategories } from "@/app/roll";
 import styles from "./OutcomeDistributionChart.module.scss";

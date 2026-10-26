@@ -1,0 +1,30 @@
+.section {
+  margin-bottom: 32px;
+
+  &:last-of-type {
+    margin-bottom: 24px;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}

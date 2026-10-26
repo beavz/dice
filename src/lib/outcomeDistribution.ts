@@ -3,10 +3,14 @@ import {
   label,
   isFailure,
   isSuccess,
-  Combiner,
-  getCombiner,
-  incrementalVersion,
+  isCriticalSuccess,
 } from "./outcome";
+import {
+  type CombineOutcomesStrategy,
+  combineFn,
+  isIncremental,
+  incrementalVersion,
+} from "./combineOutcomesStrategy";
 import type {
   RollOptions,
   DamageRoll,
@@ -18,12 +22,22 @@ import type {
 import type { Die, Dice } from "./dice";
 import type { Step, RollSequence } from "./rollSequence";
 
-export type OutcomeDistribution = Array<Outcome & { p: number }>;
+type OutcomeDistribution = Array<Outcome & { p: number }>;
 export type CategorizedOutcomeDistribution = Array<
   Outcome & { p: number; label: string }
 >;
 
-export class DistributionBuilder {
+export function getOutcomeDistribution(
+  sequence: RollSequence,
+): CategorizedOutcomeDistribution {
+  return DistributionBuilder.getResult(sequence);
+}
+
+export function expectedValue(distribution: OutcomeDistribution): number {
+  return distribution.reduce((sum, o) => sum + o.value * o.p, 0);
+}
+
+class DistributionBuilder {
   static getResult(sequence: RollSequence): CategorizedOutcomeDistribution {
     return this.custom(sequence).result();
   }
@@ -45,7 +59,8 @@ export class DistributionBuilder {
     die: Die;
     options?: RollOptions;
   }) {
-    const values = integers(1, die);
+    const values = Array.from({ length: die }, (_, i) => i + 1);
+
     return new DistributionBuilder(
       values.map((value) => {
         const criticalSuccess =
@@ -69,7 +84,7 @@ export class DistributionBuilder {
     options = {},
   }: {
     dice: Dice;
-    combine: Combiner;
+    combine: CombineOutcomesStrategy;
     options?: RollOptions;
   }): DistributionBuilder {
     if (!first) return new DistributionBuilder([]);
@@ -144,7 +159,7 @@ export class DistributionBuilder {
   }: AttackRoll["args"]) {
     return this.check({ difficulty: armor, modifier, options })
       .then(
-        (o) => (o.crit && o.success) ?? false,
+        isCriticalSuccess,
         this.damage({
           dice: [...damageDice, ...damageDice],
           modifier: damageModifier,
@@ -152,12 +167,12 @@ export class DistributionBuilder {
         "setValue",
       )
       .then(
-        (o) => (!o.crit && o.success) ?? false,
+        (o) => isSuccess(o) && !o.crit,
         this.damage({ dice: damageDice, modifier: damageModifier }),
         "setValue",
       )
       .then(
-        (o) => !o.success,
+        isFailure,
         new DistributionBuilder([{ value: 0, p: 1 }]),
         "setValue",
       )
@@ -266,20 +281,18 @@ export class DistributionBuilder {
 
   private and(
     other: DistributionBuilder | Array<DistributionBuilder>,
-    combine: Combiner,
+    combine: CombineOutcomesStrategy,
   ) {
     const others = other instanceof DistributionBuilder ? [other] : other;
     if (others.length < 1) return this;
 
-    const combiner = getCombiner(combine);
-    if (others.length > 1 && combiner.incremental === false) {
-      return this._andAllTogether(others, combiner.fn);
+    const fn = combineFn(combine);
+
+    if (!isIncremental(fn)) {
+      return this._andAllTogether(others, fn);
     }
 
-    return others.reduce(
-      (a, v) => a._andIncremental(v, incrementalVersion(combiner)),
-      this,
-    );
+    return others.reduce((a, v) => a._andIncremental(v, fn), this);
   }
 
   // combine outcomes two at a time
@@ -316,17 +329,16 @@ export class DistributionBuilder {
   private then(
     check: boolean | ((o: Outcome) => boolean),
     next: DistributionBuilder,
-    combine: Combiner,
+    combine: CombineOutcomesStrategy,
   ) {
     if (check === false) return this;
     if (check === true) return this.and(next, combine);
 
-    const combineFn = incrementalVersion(getCombiner(combine));
+    const fn = incrementalVersion(combineFn(combine));
+
     this.data = this.data
       .map((x) =>
-        check(x)
-          ? next.data.map((y) => ({ ...combineFn(x, y), p: x.p * y.p }))
-          : [x],
+        check(x) ? next.data.map((y) => ({ ...fn(x, y), p: x.p * y.p })) : [x],
       )
       .flat();
 
@@ -348,7 +360,6 @@ export class DistributionBuilder {
 
   private condense(): DistributionBuilder {
     // this merges equivalent outcomes
-
     const compare = (a: Outcome, b: Outcome) =>
       a.value != b.value
         ? a.value - b.value
@@ -373,16 +384,6 @@ export class DistributionBuilder {
   }
 }
 
-function integers(first: number, last: number): number[] {
-  const length = last - first + 1;
-  if (length < 1) return [];
-  return Array.from({ length }, (_, i) => i + first);
-}
-
 function assertNever(value: never): never {
   return value;
-}
-
-export function expectedValue(distribution: OutcomeDistribution): number {
-  return distribution.reduce((sum, o) => sum + o.value * o.p, 0);
 }

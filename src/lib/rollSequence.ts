@@ -1,16 +1,20 @@
-import type { Combiner } from "./outcome";
+import type { CombineOutcomesStrategy } from "./combineOutcomesStrategy";
 import { type Roll, getRollLabel } from "./roll";
 
-export type AndStep = { type: "and"; combine: Combiner; roll: RollSequence };
+export type AndStep = {
+  type: "and";
+  combine: CombineOutcomesStrategy;
+  roll: RollSequence;
+};
 export type ModifyStep = { type: "modify"; modifier: number };
 export type AgainstStep = { type: "against"; difficulty: number };
 export type ThenStep = {
   type: "then";
   after: {
-    success?: { combine: Combiner; roll: RollSequence };
-    failure?: { combine: Combiner; roll: RollSequence };
-    criticalSuccess?: { combine: Combiner; roll: RollSequence };
-    criticalFailure?: { combine: Combiner; roll: RollSequence };
+    success?: { combine: CombineOutcomesStrategy; roll: RollSequence };
+    failure?: { combine: CombineOutcomesStrategy; roll: RollSequence };
+    criticalSuccess?: { combine: CombineOutcomesStrategy; roll: RollSequence };
+    criticalFailure?: { combine: CombineOutcomesStrategy; roll: RollSequence };
   };
 };
 

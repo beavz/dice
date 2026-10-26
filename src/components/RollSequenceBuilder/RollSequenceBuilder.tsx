@@ -1,12 +1,13 @@
 "use client";
 
 import { Checkbox } from "react-aria-components";
-import Button from "@/components/core/Button";
-import MenuButton from "@/components/core/MenuButton";
 import SelectField, {
   type SelectFieldOption,
 } from "@/components/core/SelectField";
-import { listCombiners, type Combiner } from "@/lib/outcome";
+import {
+  listCombiners,
+  type CombineOutcomesStrategy,
+} from "@/lib/combineOutcomesStrategy";
 import {
   type Roll,
   type RollType,
@@ -21,18 +22,22 @@ import {
 } from "@/lib/roll";
 import {
   type AndStep,
+  type ModifyStep,
+  type AgainstStep,
+  type ThenStep,
   type Step,
-  type RollSequence as RollSequenceType,
+  type RollSequence,
 } from "@/lib/rollSequence";
-import CloseIcon from "@/components/icons/CloseIcon";
 import DiceField, { countsFromDice, getDice } from "@/components/DiceField";
 import NumberField from "@/components/core/NumberField";
 import RadioGroupField from "@/components/core/RadioGroupField";
-import styles from "./RollSequence.module.scss";
+import { AddStep } from "./AddStep";
+import { Node } from "./Node";
+import styles from "./RollSequenceBuilder.module.scss";
 
 type CombineActionFieldProps = {
-  value: Combiner;
-  onChange: (action: Combiner) => void;
+  value: CombineOutcomesStrategy;
+  onChange: (action: CombineOutcomesStrategy) => void;
 };
 
 export const COMBINERS = listCombiners();
@@ -43,7 +48,7 @@ function CombineActionField({ value, onChange }: CombineActionFieldProps) {
       label="Combine using"
       value={value}
       onChange={onChange}
-      options={COMBINERS}
+      options={listCombiners()}
     />
   );
 }
@@ -72,6 +77,78 @@ function AndStep({ step, onChange, onRemove }: AndStepProps) {
         />
       </div>
     </>
+  );
+}
+
+type ThenStepProps = {
+  step: ThenStep;
+  onChange: (step: ThenStep) => void;
+  onRemove?: () => void;
+};
+
+// const branches = [
+// 'success', 'failure', 'criticalSuccess', 'criticalFailure'
+// ];
+
+function ThenStep({ step, onChange, onRemove }: ThenStepProps) {
+  return (
+    <>
+      {Object.entries(step.after).map(([key, branch]) => (
+        <div key={key} className={styles.thenBranch}>
+          <Node label={`Then on ${key}...`} onRemove={onRemove}>
+            <CombineActionField
+              value={branch.combine}
+              onChange={(_combine) => onChange(step)}
+            />
+          </Node>
+          <Roll
+            label="With roll..."
+            rollSequence={branch.roll}
+            onChange={(_block) => onChange(step)}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+type ModifyStepProps = {
+  step: ModifyStep;
+  onChange: (step: ModifyStep) => void;
+  onRemove?: () => void;
+};
+
+function ModifyStep({ step, onChange, onRemove }: ModifyStepProps) {
+  return (
+    <Node label="Modify" onRemove={onRemove}>
+      <NumberField
+        ariaLabel="Modifier"
+        value={step.modifier}
+        minValue={-20}
+        maxValue={20}
+        onChange={(modifier) => onChange({ ...step, modifier })}
+      />
+    </Node>
+  );
+}
+
+type AgainstStepProps = {
+  step: AgainstStep;
+  onChange: (step: AgainstStep) => void;
+  onRemove?: () => void;
+};
+
+function AgainstStep({ step, onChange, onRemove }: AgainstStepProps) {
+  return (
+    <Node label="Evaluate (DC)" onRemove={onRemove}>
+      <NumberField
+        ariaLabel="Difficulty (DC)"
+        value={step.difficulty}
+        minValue={0}
+        maxValue={30}
+        onChange={(difficulty) => onChange({ ...step, difficulty })}
+      />
+    </Node>
   );
 }
 
@@ -200,110 +277,21 @@ function StepList({ steps, onChange }: StepListProps) {
   );
 }
 
-type AddStepProps = {
-  onSelect: (step: Step) => void;
-};
-function AddStep({ onSelect }: AddStepProps) {
-  function addStep(type: Step["type"]) {
-    const step: Step =
-      type === "modify"
-        ? { type: "modify", modifier: 1 }
-        : type === "against"
-          ? { type: "against", difficulty: 15 }
-          : type === "then"
-            ? { type: "then", after: {} }
-            : {
-                type: "and",
-                combine: "sum",
-                roll: { initialRoll: initializeRoll("basic"), steps: [] },
-              };
-
-    onSelect(step);
-  }
-
-  return (
-    <div className={styles.customStepActions}>
-      <MenuButton<Step["type"]>
-        label="+ Add step"
-        items={[
-          { id: "modify", label: "Modify" },
-          { id: "against", label: "Evaluate" },
-          { id: "and", label: "And" },
-          { id: "then", label: "Then" },
-        ]}
-        onAction={addStep}
-      />
-    </div>
-  );
-}
-
-type NodeProps = {
-  label: string;
-  onRemove?: () => void;
-  children: React.ReactNode;
-};
-
-function Node({ label, onRemove, children }: NodeProps) {
-  return (
-    <fieldset className={styles.stepContent}>
-      <legend className={styles.stepLabel}>{label}</legend>
-      {onRemove && (
-        <div className={styles.stepContentHeader}>
-          <Button
-            variant="ghost-icon"
-            onPress={onRemove}
-            aria-label="Remove step"
-          >
-            <CloseIcon />
-          </Button>
-        </div>
-      )}
-      {children}
-    </fieldset>
-  );
-}
-
 type StepNodeProps = {
   step: Step;
   onChange: (step: Step) => void;
   onRemove: () => void;
 };
 
-function StepNode({ step, onChange, onRemove }: StepNodeProps) {
-  if (step.type === "and") {
-    return <AndStep step={step} onChange={onChange} onRemove={onRemove} />;
-  }
-  return (
-    <Node
-      label={
-        step.type === "modify"
-          ? "Modify"
-          : step.type === "against"
-            ? "Evaluate (DC)"
-            : "Then"
-      }
-      onRemove={onRemove}
-    >
-      {step.type === "modify" ? (
-        <NumberField
-          ariaLabel="Modifier"
-          value={step.modifier}
-          minValue={-20}
-          maxValue={20}
-          onChange={(modifier) => onChange({ ...step, modifier })}
-        />
-      ) : step.type === "against" ? (
-        <NumberField
-          ariaLabel="Difficulty (DC)"
-          value={step.difficulty}
-          minValue={0}
-          maxValue={30}
-          onChange={(difficulty) => onChange({ ...step, difficulty })}
-        />
-      ) : (
-        <>TODO - then step here</>
-      )}
-    </Node>
+function StepNode({ step, ...rest }: StepNodeProps) {
+  return step.type === "and" ? (
+    <AndStep step={step} {...rest} />
+  ) : step.type === "modify" ? (
+    <ModifyStep step={step} {...rest} />
+  ) : step.type === "against" ? (
+    <AgainstStep step={step} {...rest} />
+  ) : (
+    <ThenStep step={step} {...rest} />
   );
 }
 
@@ -378,23 +366,32 @@ function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
         allowModifier={false}
         onChange={(counts) => {
           const dice = getDice(counts);
-          const args: BasicRoll['args'] = dice.length === 1 ?
-          { die: dice[0], options: roll.args.options } :
-          { dice, options: roll.args.options, combine: roll.args.combine ?? 'sum' }
-          onChange({ type: 'basic', args });
+          const args: BasicRoll["args"] =
+            dice.length === 1
+              ? { die: dice[0], options: roll.args.options }
+              : {
+                  dice,
+                  options: roll.args.options,
+                  combine: roll.args.combine ?? "sum",
+                };
+          onChange({ type: "basic", args });
         }}
       />
 
       {roll.args.dice && dice.length > 1 && (
         <CombineActionField
           value={roll.args.combine ?? "sum"}
-          onChange={(combine) => onChange({ ...roll, args: { ...roll.args, combine }} as BasicRoll)}
+          onChange={(combine) =>
+            onChange({ ...roll, args: { ...roll.args, combine } } as BasicRoll)
+          }
         />
       )}
 
       <RollOptionsFields
         value={roll.args.options ?? {}}
-        onChange={(options) => onChange({ ...roll, args: { ...roll.args, options }} as BasicRoll)}
+        onChange={(options) =>
+          onChange({ ...roll, args: { ...roll.args, options } } as BasicRoll)
+        }
       />
     </>
   );
@@ -621,10 +618,10 @@ function RollFields({ roll, onChange }: RollFieldsProps) {
 }
 
 type RollProps = {
-  rollSequence: RollSequenceType;
+  rollSequence: RollSequence;
   label: string;
   onRemove?: () => void;
-  onChange: (rollSequence: RollSequenceType) => void;
+  onChange: (rollSequence: RollSequence) => void;
 };
 
 function Roll({ rollSequence, label = "Roll", onRemove, onChange }: RollProps) {
@@ -652,15 +649,15 @@ function Roll({ rollSequence, label = "Roll", onRemove, onChange }: RollProps) {
   );
 }
 
-export type RollSequenceProps = {
-  rollSequence: RollSequenceType;
-  onChange: (roll: RollSequenceType) => void;
+export type RollSequenceBuilderProps = {
+  rollSequence: RollSequence;
+  onChange: (roll: RollSequence) => void;
 };
 
-export default function RollSequence({
+export function RollSequenceBuilder({
   rollSequence,
   onChange,
-}: RollSequenceProps) {
+}: RollSequenceBuilderProps) {
   return (
     <div className={styles.stepFlow}>
       <Roll label="Roll" onChange={onChange} rollSequence={rollSequence} />
@@ -668,10 +665,7 @@ export default function RollSequence({
   );
 }
 
-function withInitialRollKind(
-  roll: RollSequenceType,
-  type: RollType,
-): RollSequenceType {
+function withInitialRollKind(roll: RollSequence, type: RollType): RollSequence {
   if (roll.initialRoll.type === type) return roll;
   return { ...roll, initialRoll: initializeRoll(type) };
 }

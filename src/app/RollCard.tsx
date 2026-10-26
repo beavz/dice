@@ -3,12 +3,10 @@
 import { useMemo } from "react";
 import { DICE, type Dice } from "@/lib/dice";
 import { type BasicRoll } from "@/lib/roll";
-import {
-  type RollSequence as RollSequenceType,
-  getSequenceLabel,
-} from "@/lib/rollSequence";
-import { DistributionBuilder } from "@/lib/DistributionBuilder";
+import { type RollSequence, getSequenceLabel } from "@/lib/rollSequence";
+import { getOutcomeDistribution } from "@/lib/outcomeDistribution";
 import Button from "@/components/core/Button";
+import PageSection from "@/components/core/PageSection";
 import TextField from "@/components/core/TextField";
 import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
 import OutcomeDistributionChart from "@/components/dataVis/OutcomeDistributionChart";
@@ -16,7 +14,7 @@ import CloseIcon from "@/components/icons/CloseIcon";
 import DiceIcon from "@/components/icons/DiceIcon";
 import SwordIcon from "@/components/icons/SwordIcon";
 import WizardHatIcon from "@/components/icons/WizardHatIcon";
-import RollSequence from "@/components/RollSequence";
+import { RollSequenceBuilder } from "@/components/RollSequenceBuilder";
 import styles from "./page.module.scss";
 
 function getDiceOf(initialRoll: BasicRoll): Dice {
@@ -25,8 +23,8 @@ function getDiceOf(initialRoll: BasicRoll): Dice {
 
 type RollCardProps = {
   index: number;
-  roll: RollSequenceType;
-  onChange: (roll: RollSequenceType) => void;
+  roll: RollSequence;
+  onChange: (roll: RollSequence) => void;
   onDuplicate: () => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -40,10 +38,7 @@ export default function RollCard({
   onRemove,
   canRemove,
 }: RollCardProps) {
-  const distribution = useMemo(
-    () => DistributionBuilder.getResult(roll),
-    [roll],
-  );
+  const distribution = useMemo(() => getOutcomeDistribution(roll), [roll]);
   const label = getSequenceLabel(roll);
   const { initialRoll } = roll;
   const activeSides =
@@ -54,47 +49,47 @@ export default function RollCard({
         : ([12] as const);
 
   return (
-    <section className={styles.rollCard}>
+    <PageSection
+      heading={
+        <>
+          {`Roll ${index + 1}`}
+          {label ? `: ${label}` : ""}
+        </>
+      }
+      icons={
+        roll.initialRoll.type === "attack" ? (
+          <SwordIcon className={styles.rollIcon} />
+        ) : roll.initialRoll.type === "spellWithSave" ? (
+          <WizardHatIcon className={styles.rollIcon} />
+        ) : (
+          activeSides.map((sides) => (
+            <DiceIcon key={sides} sides={sides} className={styles.rollIcon} />
+          ))
+        )
+      }
+      actions={
+        <>
+          <Button
+            variant="outline"
+            onPress={onDuplicate}
+            aria-label={`Duplicate roll ${index + 1}`}
+          >
+            Duplicate
+          </Button>
+          {canRemove && (
+            <Button
+              variant="icon"
+              onPress={onRemove}
+              aria-label={`Remove roll ${index + 1}`}
+            >
+              <CloseIcon />
+            </Button>
+          )}
+        </>
+      }
+    >
       <div className={styles.rollLayout}>
         <div className={styles.rollConfig}>
-          <div className={styles.rollHeader}>
-            <h2 className={styles.rollTitle}>
-              {roll.initialRoll.type === "attack" ? (
-                <SwordIcon className={styles.rollIcon} />
-              ) : roll.initialRoll.type === "spellWithSave" ? (
-                <WizardHatIcon className={styles.rollIcon} />
-              ) : (
-                activeSides.map((sides) => (
-                  <DiceIcon
-                    key={sides}
-                    sides={sides}
-                    className={styles.rollIcon}
-                  />
-                ))
-              )}
-              {`Roll ${index + 1}`}
-              {label ? `: ${label}` : ""}
-            </h2>
-            <div className={styles.rollHeaderActions}>
-              <Button
-                variant="outline"
-                onPress={onDuplicate}
-                aria-label={`Duplicate roll ${index + 1}`}
-              >
-                Duplicate
-              </Button>
-              {canRemove && (
-                <Button
-                  variant="icon"
-                  onPress={onRemove}
-                  aria-label={`Remove roll ${index + 1}`}
-                >
-                  <CloseIcon />
-                </Button>
-              )}
-            </div>
-          </div>
-
           <TextField
             label="Name"
             placeholder={`Roll ${index + 1}`}
@@ -102,7 +97,7 @@ export default function RollCard({
             onChange={(name) => onChange({ ...roll, name })}
           />
 
-          <RollSequence rollSequence={roll} onChange={onChange} />
+          <RollSequenceBuilder rollSequence={roll} onChange={onChange} />
         </div>
 
         <div className={styles.rollCharts}>
@@ -110,6 +105,6 @@ export default function RollCard({
           <CategoricalOutcomeDistributionChart distribution={distribution} />
         </div>
       </div>
-    </section>
+    </PageSection>
   );
 }

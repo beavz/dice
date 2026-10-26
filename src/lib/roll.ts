@@ -1,5 +1,8 @@
 import { type Die, type Dice, diceToString } from "./dice";
-import { type Combiner, getCombiner } from "./outcome";
+import {
+  type CombineOutcomesStrategy,
+  combineStrategyLabel,
+} from "./combineOutcomesStrategy";
 
 export type RollOptions = {
   criticalSuccess?: number;
@@ -11,7 +14,12 @@ export type BasicRoll = {
   type: "basic";
   args:
     | { die: Die; dice?: never; options?: RollOptions; combine?: never }
-    | { dice: Dice; die?: never; options?: RollOptions; combine: Combiner };
+    | {
+        dice: Dice;
+        die?: never;
+        options?: RollOptions;
+        combine: CombineOutcomesStrategy;
+      };
 };
 export type DamageRoll = {
   type: "damage";
@@ -86,7 +94,7 @@ const ROLLS: {
       const combine = roll.args.die !== undefined ? "sum" : roll.args.combine;
       const rollPart =
         dice.length > 1 && combine !== "sum"
-          ? `${base} (${getCombiner(combine).label.toLowerCase()})`
+          ? `${base} (${combineStrategyLabel(combine).toLowerCase()})`
           : base;
 
       const options = roll.args.options ?? {};

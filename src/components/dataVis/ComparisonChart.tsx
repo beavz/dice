@@ -14,8 +14,12 @@ import {
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
 import { colorForIndex, sortCategories } from "@/app/roll";
-import { DistributionBuilder, expectedValue } from "@/lib/DistributionBuilder";
+import {
+  getOutcomeDistribution,
+  expectedValue,
+} from "@/lib/outcomeDistribution";
 import { type RollSequence, getSequenceLabel } from "@/lib/rollSequence";
+import PageSection from "@/components/core/PageSection";
 import CategoricalComparisonChart from "./CategoricalComparisonChart";
 import styles from "./ComparisonChart.module.scss";
 
@@ -57,7 +61,7 @@ type ComparisonChartProps = {
 export default function ComparisonChart({ rolls }: ComparisonChartProps) {
   const { data, series, outcomeCategories, outcomeData } = useMemo(() => {
     const series = rolls.map((roll, index) => {
-      const distribution = DistributionBuilder.getResult(roll);
+      const distribution = getOutcomeDistribution(roll);
       return {
         id: index,
         label: getSequenceLabel(roll),
@@ -110,9 +114,7 @@ export default function ComparisonChart({ rolls }: ComparisonChartProps) {
   if (data.length === 0) return null;
 
   return (
-    <section className={styles.rollCard}>
-      <h2 className={styles.rollTitle}>Compare rolls</h2>
-
+    <PageSection heading="Compare rolls">
       <div className={styles.card}>
         <ResponsiveContainer width="100%" height={320}>
           <LineChart
@@ -173,6 +175,6 @@ export default function ComparisonChart({ rolls }: ComparisonChartProps) {
       {outcomeCategories.length > 1 && (
         <CategoricalComparisonChart series={series} data={outcomeData} />
       )}
-    </section>
+    </PageSection>
   );
 }

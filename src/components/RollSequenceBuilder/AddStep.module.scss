@@ -1,0 +1,18 @@
+.customStepActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  position: relative;
+
+  &:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 18px;
+    border-left: 1px solid var(--border-hairline);
+    left: 24px;
+    top: -18px;
+  }
+}

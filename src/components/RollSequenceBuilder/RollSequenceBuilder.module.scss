@@ -1,0 +1,87 @@
+.stepFlow {
+  display: flex;
+  flex-direction: column;
+}
+
+.checkFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.critOptionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.andBranch {
+  margin-left: 24px;
+  border-left: 1px solid var(--border-hairline);
+  padding: 20px 0 28px 20px;
+  position: relative;
+
+  &:after {
+    content: "";
+    width: 42px;
+    height: 12px;
+    display: block;
+    border-radius: 0 0 8px 0;
+    border-right: 1px solid var(--border-hairline);
+    border-bottom: 1px solid var(--border-hairline);
+    position: absolute;
+    bottom: 16px;
+    left: 0px;
+  }
+}
+
+.andMerge {
+  margin-bottom: 8px;
+  margin-top: 2px;
+}
+
+.thenBranch {
+  margin-left: 24px;
+  border-left: 1px solid var(--border-hairline);
+  padding: 28px 0 28px 20px;
+  position: relative;
+
+  &:after {
+    content: "";
+    width: 42px;
+    height: 12px;
+    display: block;
+    border-radius: 0 8px 0 0;
+    border-right: 1px solid var(--border-hairline);
+    border-top: 1px solid var(--border-hairline);
+    position: absolute;
+    top: 12px;
+    left: 0px;
+  }
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkboxBox {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 3px;
+  background: var(--surface-1);
+}
+
+.checkbox[data-selected] .checkboxBox {
+  background: var(--series-1);
+  border-color: var(--series-1);
+}
