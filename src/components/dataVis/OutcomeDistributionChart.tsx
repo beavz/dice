@@ -12,13 +12,12 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { expectedValue as getExpectedValue, type CategorizedOutcomeDistribution
+import {
+  expectedValue as getExpectedValue,
+  type CategorizedOutcomeDistribution,
 } from "@/lib/DistributionBuilder";
 import type { TooltipContentProps } from "recharts";
-import {
-  colorForIndex,
-  sortCategories,
-} from "@/app/roll";
+import { colorForIndex, sortCategories } from "@/app/roll";
 import styles from "./OutcomeDistributionChart.module.scss";
 
 type ChartRow = { value: number } & Record<string, number | undefined>;
@@ -56,15 +55,14 @@ function ChartTooltip({ active, payload, label }: TooltipContentProps) {
 }
 
 type OutcomeDistributionChartProps = {
-  distribution: CategorizedOutcomeDistribution
+  distribution: CategorizedOutcomeDistribution;
 };
 
 export default function OutcomeDistributionChart({
   distribution,
 }: OutcomeDistributionChartProps) {
-
   const expectedValue = useMemo(() => {
-    return getExpectedValue(distribution)
+    return getExpectedValue(distribution);
   }, [distribution]);
 
   const categories = useMemo(

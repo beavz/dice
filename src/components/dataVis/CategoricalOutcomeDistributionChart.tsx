@@ -12,11 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { type CategorizedOutcomeDistribution } from '@/lib/DistributionBuilder';
-import {
-  colorForIndex,
-  sortCategories,
-} from "@/app/roll";
+import { type CategorizedOutcomeDistribution } from "@/lib/DistributionBuilder";
+import { colorForIndex, sortCategories } from "@/app/roll";
 import styles from "./CategoricalOutcomeDistributionChart.module.scss";
 
 function OutcomeTooltip({ active, payload }: TooltipContentProps) {
@@ -40,7 +37,7 @@ function OutcomeTooltip({ active, payload }: TooltipContentProps) {
 }
 
 type CategoricalOutcomeDistributionChartProps = {
-  distribution: CategorizedOutcomeDistribution
+  distribution: CategorizedOutcomeDistribution;
 };
 
 export default function CategoricalOutcomeDistributionChart({

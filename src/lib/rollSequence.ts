@@ -25,6 +25,5 @@ export type RollSequence = {
 export function getSequenceLabel(roll: RollSequence): string {
   if (roll.name) return roll.name.trim();
   if (roll.steps.length === 0) return getRollLabel(roll.initialRoll);
-  return 'Custom roll sequence';
+  return "Custom roll sequence";
 }
-

@@ -10,7 +10,7 @@ export type RollOptions = {
 export type BasicRoll = {
   type: "basic";
   args:
-    | { die: Die; dice?: never; options?: RollOptions }
+    | { die: Die; dice?: never; options?: RollOptions; combine?: never }
     | { dice: Dice; die?: never; options?: RollOptions; combine: Combiner };
 };
 export type DamageRoll = {
@@ -74,7 +74,7 @@ const ROLLS: {
   [T in RollType]: {
     initialize: () => RollOfType<T>;
     label: (roll: RollOfType<T>) => string;
-  }
+  };
 } = {
   basic: {
     initialize: () => ({ type: "basic", args: { die: 20 } }),
@@ -129,7 +129,7 @@ const ROLLS: {
       const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
 
       return parts.join(" ") + suffix;
-    }
+    },
   },
   daggerheartCheck: {
     initialize: () => ({ type: "daggerheartCheck", args: { difficulty: 15 } }),
@@ -147,7 +147,7 @@ const ROLLS: {
       const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
 
       return parts.join(" ") + suffix;
-    }
+    },
   },
   attack: {
     initialize: () => ({
@@ -178,7 +178,7 @@ const ROLLS: {
       const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
 
       return parts.join(" ") + suffix;
-    }
+    },
   },
   spellWithSave: {
     initialize: () => ({
@@ -213,9 +213,9 @@ const ROLLS: {
       const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
 
       return parts.join(" ") + suffix;
-    }
+    },
   },
-}
+};
 
 export function initializeRoll(type: RollType): Roll {
   return ROLLS[type].initialize();

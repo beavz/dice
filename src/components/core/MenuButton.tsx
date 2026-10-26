@@ -27,10 +27,7 @@ export default function MenuButton<T extends string>({
     <MenuTrigger>
       <Button variant={variant}>{label}</Button>
       <Popover className={styles.popover}>
-        <Menu
-          onAction={(key) => onAction(key as T)}
-          className={styles.list}
-        >
+        <Menu onAction={(key) => onAction(key as T)} className={styles.list}>
           {items.map((item) => (
             <MenuItem key={item.id} id={item.id} className={styles.item}>
               {item.label}

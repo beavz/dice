@@ -13,10 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import {
-  colorForIndex,
-  sortCategories,
-} from "@/app/roll";
+import { colorForIndex, sortCategories } from "@/app/roll";
 import { DistributionBuilder, expectedValue } from "@/lib/DistributionBuilder";
 import { type RollSequence, getSequenceLabel } from "@/lib/rollSequence";
 import CategoricalComparisonChart from "./CategoricalComparisonChart";

@@ -3,7 +3,9 @@
 import { Checkbox } from "react-aria-components";
 import Button from "@/components/core/Button";
 import MenuButton from "@/components/core/MenuButton";
-import SelectField, { type SelectFieldOption } from "@/components/core/SelectField";
+import SelectField, {
+  type SelectFieldOption,
+} from "@/components/core/SelectField";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
   type Roll,
@@ -23,10 +25,7 @@ import {
   type RollSequence as RollSequenceType,
 } from "@/lib/rollSequence";
 import CloseIcon from "@/components/icons/CloseIcon";
-import DiceField, {
-  countsFromDice,
-  getDice,
-} from "@/components/DiceField";
+import DiceField, { countsFromDice, getDice } from "@/components/DiceField";
 import NumberField from "@/components/core/NumberField";
 import RadioGroupField from "@/components/core/RadioGroupField";
 import styles from "./RollSequence.module.scss";
@@ -61,7 +60,7 @@ function AndStep({ step, onChange, onRemove }: AndStepProps) {
       <div className={styles.andBranch}>
         <Roll
           label="And roll..."
-          rollSequence={step.roll as any}
+          rollSequence={step.roll}
           onChange={(block) => onChange({ ...step, ...block })}
           onRemove={onRemove}
         />
@@ -207,13 +206,17 @@ type AddStepProps = {
 function AddStep({ onSelect }: AddStepProps) {
   function addStep(type: Step["type"]) {
     const step: Step =
-      type === "modify" ? { type: "modify", modifier: 1 } :
-      type === "against" ? { type: "against", difficulty: 15 } :
-      type === "then" ? { type: 'then', after: {} } :
-      { type: "and",
-        combine: "sum",
-        roll: { initialRoll: initializeRoll('basic'), steps: [] },
-      };
+      type === "modify"
+        ? { type: "modify", modifier: 1 }
+        : type === "against"
+          ? { type: "against", difficulty: 15 }
+          : type === "then"
+            ? { type: "then", after: {} }
+            : {
+                type: "and",
+                combine: "sum",
+                roll: { initialRoll: initializeRoll("basic"), steps: [] },
+              };
 
     onSelect(step);
   }
@@ -367,10 +370,6 @@ type BasicRollFieldsProps = {
 function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
   const dice = roll.args.dice ?? [roll.args.die];
 
-  function updateArgs(partial: Partial<BasicRoll["args"]>) {
-    onChange({ ...roll, args: { ...(roll.args as any), ...partial } });
-  }
-
   return (
     <>
       <DiceField
@@ -379,24 +378,23 @@ function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
         allowModifier={false}
         onChange={(counts) => {
           const dice = getDice(counts);
-          const args: Partial<BasicRoll["args"]> =
-            dice.length === 1
-              ? { die: dice[0], dice: undefined }
-              : { dice, die: undefined };
-          updateArgs(args);
+          const args: BasicRoll['args'] = dice.length === 1 ?
+          { die: dice[0], options: roll.args.options } :
+          { dice, options: roll.args.options, combine: roll.args.combine ?? 'sum' }
+          onChange({ type: 'basic', args });
         }}
       />
 
       {roll.args.dice && dice.length > 1 && (
         <CombineActionField
           value={roll.args.combine ?? "sum"}
-          onChange={(combine) => updateArgs({ combine })}
+          onChange={(combine) => onChange({ ...roll, args: { ...roll.args, combine }} as BasicRoll)}
         />
       )}
 
       <RollOptionsFields
         value={roll.args.options ?? {}}
-        onChange={(options) => updateArgs({ options })}
+        onChange={(options) => onChange({ ...roll, args: { ...roll.args, options }} as BasicRoll)}
       />
     </>
   );

@@ -13,7 +13,7 @@ export function createAndStep(): AndStep {
     type: "and",
     combine: "sum",
     roll: {
-      initialRoll: initializeRoll('basic'),
+      initialRoll: initializeRoll("basic"),
       steps: [],
     },
   };

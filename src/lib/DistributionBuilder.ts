@@ -19,7 +19,9 @@ import type { Die, Dice } from "./dice";
 import type { Step, RollSequence } from "./rollSequence";
 
 export type OutcomeDistribution = Array<Outcome & { p: number }>;
-export type CategorizedOutcomeDistribution = Array<Outcome & { p: number; label: string }>;
+export type CategorizedOutcomeDistribution = Array<
+  Outcome & { p: number; label: string }
+>;
 
 export class DistributionBuilder {
   static getResult(sequence: RollSequence): CategorizedOutcomeDistribution {
@@ -36,7 +38,13 @@ export class DistributionBuilder {
     return this.data.map((o) => ({ ...o, label: label(o) }));
   }
 
-  protected static rollDie({ die, options = {} }: { die: Die; options?: RollOptions }) {
+  protected static rollDie({
+    die,
+    options = {},
+  }: {
+    die: Die;
+    options?: RollOptions;
+  }) {
     const values = integers(1, die);
     return new DistributionBuilder(
       values.map((value) => {
@@ -82,7 +90,11 @@ export class DistributionBuilder {
   }
 
   // a DND "skill check" roll using one or 2 d20 with a set difficulty and a skill modifier
-  protected static check({ difficulty, modifier, options = {} }: CheckRoll["args"]) {
+  protected static check({
+    difficulty,
+    modifier,
+    options = {},
+  }: CheckRoll["args"]) {
     const crits = {
       criticalSuccess: 20,
       criticalFailure: options.nat1s ? 1 : undefined,
@@ -346,19 +358,16 @@ export class DistributionBuilder {
             ? -1
             : 1;
 
-    this.data = this.data.sort(compare).reduce(
-      (a, next) => {
-        const last = a.pop();
-        if (!last) return [next];
-        if (compare(last, next) === 0) {
-          a.push({ ...last, p: last.p + next.p });
-        } else {
-          a.push(last, next);
-        }
-        return a;
-      },
-      [] as OutcomeDistribution,
-    );
+    this.data = this.data.sort(compare).reduce((a, next) => {
+      const last = a.pop();
+      if (!last) return [next];
+      if (compare(last, next) === 0) {
+        a.push({ ...last, p: last.p + next.p });
+      } else {
+        a.push(last, next);
+      }
+      return a;
+    }, [] as OutcomeDistribution);
 
     return this;
   }
@@ -377,4 +386,3 @@ function assertNever(value: never): never {
 export function expectedValue(distribution: OutcomeDistribution): number {
   return distribution.reduce((sum, o) => sum + o.value * o.p, 0);
 }
-

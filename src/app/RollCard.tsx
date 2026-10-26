@@ -3,8 +3,11 @@
 import { useMemo } from "react";
 import { DICE, type Dice } from "@/lib/dice";
 import { type BasicRoll } from "@/lib/roll";
-import { type RollSequence as RollSequenceType, getSequenceLabel } from "@/lib/rollSequence";
-import { DistributionBuilder } from '@/lib/DistributionBuilder';
+import {
+  type RollSequence as RollSequenceType,
+  getSequenceLabel,
+} from "@/lib/rollSequence";
+import { DistributionBuilder } from "@/lib/DistributionBuilder";
 import Button from "@/components/core/Button";
 import TextField from "@/components/core/TextField";
 import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
@@ -17,7 +20,7 @@ import RollSequence from "@/components/RollSequence";
 import styles from "./page.module.scss";
 
 function getDiceOf(initialRoll: BasicRoll): Dice {
-  return initialRoll.args.dice ?? [initialRoll.args.die]
+  return initialRoll.args.dice ?? [initialRoll.args.die];
 }
 
 type RollCardProps = {
@@ -37,7 +40,10 @@ export default function RollCard({
   onRemove,
   canRemove,
 }: RollCardProps) {
-  const distribution = useMemo(() => DistributionBuilder.getResult(roll), [roll]);
+  const distribution = useMemo(
+    () => DistributionBuilder.getResult(roll),
+    [roll],
+  );
   const label = getSequenceLabel(roll);
   const { initialRoll } = roll;
   const activeSides =
