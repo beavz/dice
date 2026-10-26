@@ -14,11 +14,11 @@ import SelectField, {
 import {
   createAndStep,
   createThenStep,
-  withInitialRollKind,
 } from "@/app/roll";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
   type Roll,
+  type RollType,
   type RollOptions,
   type BasicRoll,
   type AttackRoll,
@@ -26,6 +26,7 @@ import {
   type DaggerheartCheckRoll,
   type DamageRoll,
   type SpellRoll,
+  initializeRoll,
 } from "@/lib/roll";
 import {
   type AndStep,
@@ -700,4 +701,12 @@ export default function RollSequence({
       <Roll label="Roll" onChange={onChange} rollSequence={rollSequence} />
     </div>
   );
+}
+
+function withInitialRollKind(
+  roll: RollSequenceType,
+  type: RollType,
+): RollSequenceType {
+  if (roll.initialRoll.type === type) return roll;
+  return { ...roll, initialRoll: initializeRoll(type) };
 }

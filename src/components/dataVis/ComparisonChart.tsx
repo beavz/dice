@@ -15,10 +15,9 @@ import {
 import type { TooltipContentProps } from "recharts";
 import {
   colorForIndex,
-  getRollDisplayName,
-  getDistributionBuilder,
   sortCategories,
 } from "@/app/roll";
+import { DistributionBuilder, expectedValue } from "@/lib/DistributionBuilder";
 import { type RollSequence, getSequenceLabel } from "@/lib/rollSequence";
 import CategoricalComparisonChart from "./CategoricalComparisonChart";
 import styles from "./ComparisonChart.module.scss";
@@ -61,13 +60,13 @@ type ComparisonChartProps = {
 export default function ComparisonChart({ rolls }: ComparisonChartProps) {
   const { data, series, outcomeCategories, outcomeData } = useMemo(() => {
     const series = rolls.map((roll, index) => {
-      const builder = getDistributionBuilder(roll);
+      const distribution = DistributionBuilder.getResult(roll);
       return {
         id: index,
         label: getSequenceLabel(roll),
         color: colorForIndex(index),
-        distribution: builder.result(),
-        expectedValue: builder.expectedValue(),
+        distribution,
+        expectedValue: expectedValue(distribution),
       };
     });
 

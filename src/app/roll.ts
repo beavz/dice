@@ -25,8 +25,6 @@ import {
   getDice,
 } from "@/components/DiceField";
 
-export type CombineAction = Combiner;
-
 export function createThenStep(): ThenStep {
   return {
     type: "then",
@@ -45,15 +43,6 @@ export function createAndStep(): AndStep {
   };
 }
 
-export function createRoll(counts: Counts = { 20: 1 }): RollSequence {
-  return {
-    initialRoll: {
-      type: "basic",
-      args: { dice: getDice(counts), combine: "sum" },
-    },
-    steps: [],
-  };
-}
 
 export function withInitialRollKind<T extends { initialRoll: Roll }>(
   roll: T,
@@ -63,20 +52,11 @@ export function withInitialRollKind<T extends { initialRoll: Roll }>(
   return { ...roll, initialRoll: initializeRoll(type) };
 }
 
-
 export function getRollDisplayName(
   roll: RollSequence,
   index: number,
 ): string {
   return roll.name?.trim() || `Roll ${index + 1}`;
-}
-
-export type DistributionPoint = { value: number; label: string; p: number };
-
-export function getDistributionBuilder(
-  roll: RollSequence,
-): DistributionBuilder {
-  return DistributionBuilder.custom(roll);
 }
 
 export function getDiceOf(initialRoll: BasicRoll): Die[] {

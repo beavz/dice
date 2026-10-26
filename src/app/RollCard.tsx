@@ -1,13 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  getDiceOf,
-  getRollDisplayName,
-  getDistributionBuilder,
-} from "./roll";
-import { DICE } from "@/lib/dice";
+import { DICE, type Dice } from "@/lib/dice";
+import { type BasicRoll } from "@/lib/roll";
 import { type RollSequence as RollSequenceType, getSequenceLabel } from "@/lib/rollSequence";
+import { DistributionBuilder } from '@/lib/DistributionBuilder';
 import Button from "@/components/core/Button";
 import TextField from "@/components/core/TextField";
 import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
@@ -18,6 +15,10 @@ import SwordIcon from "@/components/icons/SwordIcon";
 import WizardHatIcon from "@/components/icons/WizardHatIcon";
 import RollSequence from "@/components/RollSequence";
 import styles from "./page.module.scss";
+
+function getDiceOf(initialRoll: BasicRoll): Dice {
+  return initialRoll.args.dice ?? [initialRoll.args.die]
+}
 
 type RollCardProps = {
   index: number;
@@ -36,14 +37,7 @@ export default function RollCard({
   onRemove,
   canRemove,
 }: RollCardProps) {
-  const { distribution, expectedValue } = useMemo(() => {
-    const builder = getDistributionBuilder(roll);
-    return {
-      distribution: builder.result(),
-      expectedValue: builder.expectedValue(),
-    };
-  }, [roll]);
-
+  const distribution = useMemo(() => DistributionBuilder.getResult(roll), [roll]);
   const label = getSequenceLabel(roll);
   const { initialRoll } = roll;
   const activeSides =
@@ -72,7 +66,7 @@ export default function RollCard({
                   />
                 ))
               )}
-              {getRollDisplayName(roll, index)}
+              {`Roll ${index + 1}`}
               {label ? `: ${label}` : ""}
             </h2>
             <div className={styles.rollHeaderActions}>
@@ -106,11 +100,7 @@ export default function RollCard({
         </div>
 
         <div className={styles.rollCharts}>
-          <OutcomeDistributionChart
-            distribution={distribution}
-            expectedValue={expectedValue}
-          />
-
+          <OutcomeDistributionChart distribution={distribution} />
           <CategoricalOutcomeDistributionChart distribution={distribution} />
         </div>
       </div>

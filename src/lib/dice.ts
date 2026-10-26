@@ -5,7 +5,7 @@ export type Dice = Array<Die>;
 export function diceToString(dice: Dice, modifier?: number): string {
   const expression = DICE.reduce((terms, die) => {
     const count = dice.filter((d) => d === die).length;
-    return count > 0 ? [ ...terms, "${count}d${die}" ] : terms
+    return count > 0 ? [ ...terms, `${count}d${die}` ] : terms
   }, [] as Array<string>).join(' + ');
 
   if (!modifier) return expression;

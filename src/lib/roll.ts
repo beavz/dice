@@ -66,7 +66,7 @@ export type Roll =
   | AttackRoll
   | SpellRoll;
 
-type RollType = Roll["type"];
+export type RollType = Roll["type"];
 
 type RollOfType<T extends RollType> = Extract<Roll, { type: T }>;
 

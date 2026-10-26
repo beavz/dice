@@ -21,22 +21,25 @@ import type {
 import type { Die, Dice } from "./dice";
 import type { Step, RollSequence } from "./rollSequence";
 
-export class DistributionBuilder {
-  private data: Array<Outcome & { p: number }>;
+export type OutcomeDistribution = Array<Outcome & { p: number }>;
+export type CategorizedOutcomeDistribution = Array<Outcome & { p: number; label: string }>;
 
-  protected constructor(data: Array<Outcome & { p: number }>) {
+export class DistributionBuilder {
+  static getResult(sequence: RollSequence): CategorizedOutcomeDistribution {
+    return this.custom(sequence).result();
+  }
+
+  private data: OutcomeDistribution;
+
+  protected constructor(data: OutcomeDistribution) {
     this.data = data;
   }
 
-  public result(): Array<{ value: number; label: string; p: number }> {
+  private result(): CategorizedOutcomeDistribution {
     return this.data.map((o) => ({ ...o, label: label(o) }));
   }
 
-  public expectedValue(): number {
-    return this.data.reduce((total, { value, p }) => total + value * p, 0);
-  }
-
-  static rollDie({ die, options = {} }: { die: Die; options?: RollOptions }) {
+  protected static rollDie({ die, options = {} }: { die: Die; options?: RollOptions }) {
     const values = integers(1, die);
     return new DistributionBuilder(
       values.map((value) => {
@@ -55,7 +58,7 @@ export class DistributionBuilder {
     );
   }
 
-  static rollDice({
+  protected static rollDice({
     dice: [first, ...rest],
     combine,
     options = {},
@@ -72,17 +75,17 @@ export class DistributionBuilder {
     );
   }
 
-  static singleOutcome(o: Outcome) {
+  protected static singleOutcome(o: Outcome) {
     return new DistributionBuilder([{ ...o, p: 1 }]);
   }
 
   // a standard pool of dice summed together
-  static damage({ dice, modifier = 0 }: DamageRoll["args"]) {
+  protected static damage({ dice, modifier = 0 }: DamageRoll["args"]) {
     return this.rollDice({ dice, combine: "sum" }).modify(modifier);
   }
 
   // a DND "skill check" roll using one or 2 d20 with a set difficulty and a skill modifier
-  static check({ difficulty, modifier, options = {} }: CheckRoll["args"]) {
+  protected static check({ difficulty, modifier, options = {} }: CheckRoll["args"]) {
     const crits = {
       criticalSuccess: 20,
       criticalFailure: options.nat1s ? 1 : undefined,
@@ -105,7 +108,7 @@ export class DistributionBuilder {
   }
 
   // a Daggerheart-style check roll with hope and fear
-  static daggerheartCheck({
+  protected static daggerheartCheck({
     difficulty,
     modifier = 0,
     options = {},
@@ -123,7 +126,7 @@ export class DistributionBuilder {
   }
 
   // a DND attack roll and then subsequent damage
-  static attack({
+  protected static attack({
     armor,
     modifier = 0,
     damageDice,
@@ -153,7 +156,7 @@ export class DistributionBuilder {
   }
 
   // a DND spell with an opposing save roll and subsequent damage
-  static spellWithSave({
+  protected static spellWithSave({
     dc,
     saveModifier = 0,
     damageDice,
@@ -177,7 +180,7 @@ export class DistributionBuilder {
   }
 
   // build a custom roll or sequence of rolls
-  static custom({ initialRoll: roll, steps }: RollSequence) {
+  protected static custom({ initialRoll: roll, steps }: RollSequence) {
     let builder: DistributionBuilder;
     switch (roll.type) {
       case "basic":
@@ -357,7 +360,7 @@ export class DistributionBuilder {
         }
         return a;
       },
-      [] as DistributionBuilder["data"],
+      [] as OutcomeDistribution,
     );
 
     return this;
@@ -373,3 +376,8 @@ function integers(first: number, last: number): number[] {
 function assertNever(value: never): never {
   return value;
 }
+
+export function expectedValue(distribution: OutcomeDistribution): number {
+  return distribution.reduce((sum, o) => sum + o.value * o.p, 0);
+}
+
