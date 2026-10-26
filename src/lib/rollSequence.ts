@@ -1,5 +1,5 @@
 import type { Combiner } from "./outcome";
-import type { Roll } from "./roll";
+import { type Roll, getRollLabel } from "./roll";
 
 export type AndStep = { type: "and"; combine: Combiner; roll: RollSequence };
 export type ModifyStep = { type: "modify"; modifier: number };
@@ -21,3 +21,10 @@ export type RollSequence = {
   steps: Array<Step>;
   name?: string;
 };
+
+export function getSequenceLabel(roll: RollSequence): string {
+  if (roll.name) return roll.name.trim();
+  if (roll.steps.length === 0) return getRollLabel(roll.initialRoll);
+  return 'Custom roll sequence';
+}
+

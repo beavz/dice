@@ -15,7 +15,6 @@ import {
   createAndStep,
   createThenStep,
   withInitialRollKind,
-  type CombineAction,
 } from "@/app/roll";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
@@ -47,8 +46,8 @@ import RadioGroupField from "@/components/core/RadioGroupField";
 import styles from "./RollSequence.module.scss";
 
 type CombineActionFieldProps = {
-  value: CombineAction;
-  onChange: (action: CombineAction) => void;
+  value: Combiner;
+  onChange: (action: Combiner) => void;
 };
 
 export const COMBINERS = listCombiners();

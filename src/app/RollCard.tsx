@@ -2,13 +2,12 @@
 
 import { useMemo } from "react";
 import {
-  formatRollLabel,
   getDiceOf,
   getRollDisplayName,
   getDistributionBuilder,
 } from "./roll";
 import { DICE } from "@/lib/dice";
-import { type RollSequence as RollSequenceType } from "@/lib/rollSequence";
+import { type RollSequence as RollSequenceType, getSequenceLabel } from "@/lib/rollSequence";
 import Button from "@/components/core/Button";
 import TextField from "@/components/core/TextField";
 import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
@@ -45,7 +44,7 @@ export default function RollCard({
     };
   }, [roll]);
 
-  const label = formatRollLabel(roll);
+  const label = getSequenceLabel(roll);
   const { initialRoll } = roll;
   const activeSides =
     initialRoll.type === "basic"
