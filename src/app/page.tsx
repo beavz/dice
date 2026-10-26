@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Button from "@/components/Button";
+import Button from "@/components/core/Button";
+import ComparisonChart from "@/components/dataVis/ComparisonChart";
 import RollCard from "./RollCard";
-import ComparisonChart from "./ComparisonChart";
 import { createRoll, type Roll } from "./roll";
 import styles from "./page.module.scss";
 

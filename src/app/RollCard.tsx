@@ -10,15 +10,15 @@ import {
   type Roll,
 } from "./roll";
 import { DICE } from '@/lib/dice';
-import Button from "@/components/Button";
-import CategoricalOutcomeDistributionChart from "@/components/CategoricalOutcomeDistributionChart";
-import CloseIcon from "@/components/CloseIcon";
-import DiceIcon from "@/components/DiceIcon";
-import OutcomeDistributionChart from "@/components/OutcomeDistributionChart";
+import Button from "@/components/core/Button";
+import TextField from "@/components/core/TextField";
+import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
+import OutcomeDistributionChart from "@/components/dataVis/OutcomeDistributionChart";
+import CloseIcon from "@/components/icons/CloseIcon";
+import DiceIcon from "@/components/icons/DiceIcon";
+import SwordIcon from "@/components/icons/SwordIcon";
+import WizardHatIcon from "@/components/icons/WizardHatIcon";
 import RollSequence from "@/components/RollSequence";
-import SwordIcon from "@/components/SwordIcon";
-import TextField from "@/components/TextField";
-import WizardHatIcon from "@/components/WizardHatIcon";
 import styles from "./page.module.scss";
 
 type ChartRow = { value: number } & Record<string, number | undefined>;

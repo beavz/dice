@@ -7,8 +7,8 @@ import {
   MenuTrigger,
   Popover,
 } from "react-aria-components";
-import Button from "@/components/Button";
-import SelectField, { type SelectFieldOption } from "@/components/SelectField";
+import Button from "@/components/core/Button";
+import SelectField, { type SelectFieldOption } from "@/components/core/SelectField";
 import {
   createAndStep,
   createThenStep,
@@ -32,10 +32,10 @@ import {
   type DamageRoll,
   type SpellRoll,
 } from "@/lib/dice";
-import CloseIcon from "@/components/CloseIcon";
+import CloseIcon from "@/components/icons/CloseIcon";
 import DiceField, { countsFromDice, getDice, totalDice } from "@/components/DiceField";
-import NumberField from "@/components/NumberField";
-import RadioGroupField from "@/components/RadioGroupField";
+import NumberField from "@/components/core/NumberField";
+import RadioGroupField from "@/components/core/RadioGroupField";
 import styles from "./RollSequence.module.scss";
 
 

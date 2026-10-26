@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { type Die, DICE } from "@/lib/dice";
-import TextField from "./TextField";
+import TextField from "./core/TextField";
 
 export type Counts = Partial<Record<Die, number>>;
 

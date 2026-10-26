@@ -1,0 +1,54 @@
+.rollCard {
+  margin-bottom: 32px;
+
+  &:last-of-type {
+    margin-bottom: 24px;
+  }
+}
+
+.rollTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  margin: 0;
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.tooltip {
+  background: var(--surface-1);
+  border: 1px solid var(--border-hairline);
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.tooltipValue {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.tooltipLabel {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.tooltipSwatch {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+}
