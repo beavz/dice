@@ -6,9 +6,9 @@ import {
   getDiceOf,
   getRollDisplayName,
   getDistributionBuilder,
-  type ExampleSequence,
 } from "./roll";
-import { DICE } from '@/lib/dice';
+import { DICE } from "@/lib/dice";
+import { type RollSequence as RollSequenceType } from "@/lib/rollSequence";
 import Button from "@/components/core/Button";
 import TextField from "@/components/core/TextField";
 import CategoricalOutcomeDistributionChart from "@/components/dataVis/CategoricalOutcomeDistributionChart";
@@ -22,8 +22,8 @@ import styles from "./page.module.scss";
 
 type RollCardProps = {
   index: number;
-  roll: ExampleSequence;
-  onChange: (roll: ExampleSequence) => void;
+  roll: RollSequenceType;
+  onChange: (roll: RollSequenceType) => void;
   onDuplicate: () => void;
   onRemove: () => void;
   canRemove: boolean;
@@ -42,7 +42,7 @@ export default function RollCard({
     return {
       distribution: builder.result(),
       expectedValue: builder.expectedValue(),
-    }
+    };
   }, [roll]);
 
   const label = formatRollLabel(roll);
@@ -99,7 +99,7 @@ export default function RollCard({
           <TextField
             label="Name"
             placeholder={`Roll ${index + 1}`}
-            value={roll.name}
+            value={roll.name ?? ""}
             onChange={(name) => onChange({ ...roll, name })}
           />
 

@@ -1,5 +1,5 @@
+import { DistributionBuilder } from "@/lib/DistributionBuilder";
 import {
-  DistributionBuilder, type Die,
   type Roll,
   type BasicRoll,
   type DamageRoll,
@@ -7,17 +7,19 @@ import {
   type DaggerheartCheckRoll,
   type AttackRoll,
   type SpellRoll,
+  type RollOptions,
+} from "@/lib/roll";
+import {
   type AndStep,
   type ThenStep,
   type Step,
   type RollSequence,
-  type RollOptions,
-} from "@/lib/dice";
+} from "@/lib/rollSequence";
+import { type Die, diceToString } from "@/lib/dice";
 import { getCombiner, type Combiner } from "@/lib/outcome";
 import {
   type Counts,
   countsFromDice,
-  formatRollExpression,
   getDice,
 } from "@/components/DiceField";
 
@@ -27,9 +29,9 @@ const ROLLS = {
   basic: {
     initialize: () => ({ type: "basic", args: { die: 20 } }),
     expression: (roll: BasicRoll): string => {
-      const dice = roll.args.die !== undefined ? [roll.args.die] : roll.args.dice;
-      const base = formatRollExpression(countsFromDice(dice), 0);
-      if (!base) return "";
+      const dice =
+        roll.args.die !== undefined ? [roll.args.die] : roll.args.dice;
+      const base = diceToString(dice);
 
       const combine = roll.args.die !== undefined ? "sum" : roll.args.combine;
       const rollPart =
@@ -49,64 +51,69 @@ const ROLLS = {
       const suffix = tags.length > 0 ? ` (${tags.join(", ")})` : "";
 
       return rollPart + suffix;
-    }
+    },
   },
   damage: {
     initialize: () => ({ type: "damage", args: { dice: [8, 8], modifier: 0 } }),
     expression: (roll: DamageRoll) => {
-       return formatRollExpression(countsFromDice(roll.args.dice), roll.args.modifier ?? 0);
+      return diceToString(roll.args.dice, roll.args.modifier);
     },
   },
   check: {
-    initialize: () => ({ type: "check", args: { difficulty: 15, modifier: 0 } }),
-    expression: (roll: any) => '',
+    initialize: () => ({
+      type: "check",
+      args: { difficulty: 15, modifier: 0 },
+    }),
+    expression: (roll: any) => "",
   },
   daggerheartCheck: {
     initialize: () => ({ type: "daggerheartCheck", args: { difficulty: 15 } }),
-    expression: (roll: any) => '',
+    expression: (roll: any) => "",
   },
   attack: {
-    initialize: () => ({ type: "attack", args: { armor: 16, modifier: 0, damageDice: [6] } }),
-    expression: (roll: any) => '',
+    initialize: () => ({
+      type: "attack",
+      args: { armor: 16, modifier: 0, damageDice: [6] },
+    }),
+    expression: (roll: any) => "",
   },
   spellWithSave: {
-    initialize: () => ({ type: "spellWithSave", args: { dc: 14, damageDice: [12, 12] } }),
-    expression: (roll: any) => '',
+    initialize: () => ({
+      type: "spellWithSave",
+      args: { dc: 14, damageDice: [12, 12] },
+    }),
+    expression: (roll: any) => "",
   },
-} satisfies Record<Roll['type'], { initialize: () => Roll, expression?: any }>;
+} satisfies Record<Roll["type"], { initialize: () => Roll; expression?: any }>;
 
 function createInitialRoll(type: Roll["type"]): Roll {
   return ROLLS[type].initialize();
 }
 
-export type ExampleSequence = {
-  name: string;
-  initialRoll: Roll;
-  steps: Step[];
-};
-
 export function createThenStep(): ThenStep {
   return {
-    type: 'then',
+    type: "then",
     after: {},
   };
 }
 
 export function createAndStep(): AndStep {
   return {
-    type: 'and',
-    combine: 'sum',
+    type: "and",
+    combine: "sum",
     roll: {
       initialRoll: ROLLS.basic.initialize(),
       steps: [],
-    }
+    },
   };
 }
 
-export function createRoll(counts: Counts = { 20: 1 }): ExampleSequence {
+export function createRoll(counts: Counts = { 20: 1 }): RollSequence {
   return {
-    name: "",
-    initialRoll: { type: "basic", args: { dice: getDice(counts), combine: "sum" } },
+    initialRoll: {
+      type: "basic",
+      args: { dice: getDice(counts), combine: "sum" },
+    },
     steps: [],
   };
 }
@@ -161,14 +168,20 @@ function formatDaggerheartExpression(roll: DaggerheartCheckRoll): string {
 }
 
 function formatAttackExpression(roll: AttackRoll): string {
-  const { armor, modifier, damageDice, damageModifier = 0, options = {} } = roll.args;
+  const {
+    armor,
+    modifier,
+    damageDice,
+    damageModifier = 0,
+    options = {},
+  } = roll.args;
   const parts = [`AC ${armor} attack`];
   if (modifier !== 0) {
     const sign = modifier > 0 ? "+" : "-";
     parts.push(`${sign} ${Math.abs(modifier)}`);
   }
 
-  const damage = formatRollExpression(countsFromDice(damageDice), damageModifier);
+  const damage = diceToString(damageDice, damageModifier);
   if (damage) parts.push(`→ ${damage} damage`);
 
   const tags: string[] = [];
@@ -181,16 +194,24 @@ function formatAttackExpression(roll: AttackRoll): string {
 }
 
 function formatSpellSaveExpression(roll: SpellRoll): string {
-  const { dc, saveModifier = 0, damageDice, damageModifier = 0, options = {} } = roll.args;
+  const {
+    dc,
+    saveModifier = 0,
+    damageDice,
+    damageModifier = 0,
+    options = {},
+  } = roll.args;
   const parts = [`DC ${dc} save`];
   if (saveModifier !== 0) {
     const sign = saveModifier > 0 ? "+" : "-";
     parts.push(`${sign} ${Math.abs(saveModifier)}`);
   }
 
-  const damage = formatRollExpression(countsFromDice(damageDice), damageModifier);
+  const damage = diceToString(damageDice, damageModifier);
   if (damage) {
-    parts.push(`→ ${damage} damage${options.saveTakesHalf ? " (half on save)" : ""}`);
+    parts.push(
+      `→ ${damage} damage${options.saveTakesHalf ? " (half on save)" : ""}`,
+    );
   }
 
   const tags: string[] = [];
@@ -219,22 +240,29 @@ function formatInitialRollExpression(initialRoll: Roll): string {
   }
 }
 
-export function getRollDisplayName(roll: ExampleSequence, index: number): string {
-  return roll.name.trim() || `Roll ${index + 1}`;
+export function getRollDisplayName(
+  roll: RollSequence,
+  index: number,
+): string {
+  return roll.name?.trim() || `Roll ${index + 1}`;
 }
 
-export function formatRollLabel(roll: ExampleSequence): string {
-  return 'Custom roll sequence';
+export function formatRollLabel(roll: RollSequence): string {
+  return "Custom roll sequence";
 }
 
 export type DistributionPoint = { value: number; label: string; p: number };
 
-export function getDistributionBuilder(roll: RollSequence): DistributionBuilder {
-  return DistributionBuilder.custom(roll)
+export function getDistributionBuilder(
+  roll: RollSequence,
+): DistributionBuilder {
+  return DistributionBuilder.custom(roll);
 }
 
 export function getDiceOf(initialRoll: BasicRoll): Die[] {
-  return initialRoll.args.die !== undefined ? [initialRoll.args.die] : initialRoll.args.dice;
+  return initialRoll.args.die !== undefined
+    ? [initialRoll.args.die]
+    : initialRoll.args.dice;
 }
 
 export const CATEGORICAL_COLORS = [

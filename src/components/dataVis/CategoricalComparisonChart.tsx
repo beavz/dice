@@ -20,7 +20,11 @@ type OutcomeComparisonPoint = { label: string } & Record<
 
 type ComparisonSeries = { id: number; label: string; color: string };
 
-function OutcomeCompareTooltip({ active, payload, label }: TooltipContentProps) {
+function OutcomeCompareTooltip({
+  active,
+  payload,
+  label,
+}: TooltipContentProps) {
   if (!active || !payload?.length) return null;
 
   return (
@@ -57,7 +61,10 @@ export default function CategoricalComparisonChart({
   return (
     <div className={styles.card}>
       <h3 className={styles.sectionLabel}>Outcome likelihood</h3>
-      <ResponsiveContainer width="100%" height={Math.max(160, data.length * 44)}>
+      <ResponsiveContainer
+        width="100%"
+        height={Math.max(160, data.length * 44)}
+      >
         <BarChart
           data={data}
           layout="vertical"
@@ -89,7 +96,13 @@ export default function CategoricalComparisonChart({
             wrapperStyle={{ fontSize: 12, color: "var(--text-secondary)" }}
           />
           {series.map(({ id, label, color }) => (
-            <Bar key={id} dataKey={id} name={label} fill={color} maxBarSize={16} />
+            <Bar
+              key={id}
+              dataKey={id}
+              name={label}
+              fill={color}
+              maxBarSize={16}
+            />
           ))}
         </BarChart>
       </ResponsiveContainer>

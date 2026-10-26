@@ -1,10 +1,8 @@
-import { type Die, DICE } from '@/lib/dice';
+import { type Die, DICE } from "@/lib/dice";
 import { parseRollExpression } from "./DiceField";
 
 const EMPTY_COUNTS = {};
-function counts(
-  overrides: Partial<Record<Die, number>>,
-) {
+function counts(overrides: Partial<Record<Die, number>>) {
   return { ...overrides };
 }
 

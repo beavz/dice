@@ -4,13 +4,14 @@ import { useState } from "react";
 import Button from "@/components/core/Button";
 import ComparisonChart from "@/components/dataVis/ComparisonChart";
 import RollCard from "./RollCard";
-import { createRoll, type ExampleSequence } from "./roll";
+import { createRoll } from "./roll";
+import { type RollSequence } from "@/lib/rollSequence";
 import styles from "./page.module.scss";
 
 export default function Home() {
-  const [rolls, setRolls] = useState<ExampleSequence[]>([createRoll()]);
+  const [rolls, setRolls] = useState<RollSequence[]>([createRoll()]);
 
-  function updateRoll(index: number, updated: ExampleSequence) {
+  function updateRoll(index: number, updated: RollSequence) {
     setRolls((current) =>
       current.map((roll, i) => (i === index ? updated : roll)),
     );

@@ -1,6 +1,10 @@
 "use client";
 
-import { forwardRef, type KeyboardEventHandler, type FocusEventHandler } from "react";
+import {
+  forwardRef,
+  type KeyboardEventHandler,
+  type FocusEventHandler,
+} from "react";
 import {
   FieldError,
   Input,

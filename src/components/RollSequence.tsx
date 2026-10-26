@@ -8,13 +8,14 @@ import {
   Popover,
 } from "react-aria-components";
 import Button from "@/components/core/Button";
-import SelectField, { type SelectFieldOption } from "@/components/core/SelectField";
+import SelectField, {
+  type SelectFieldOption,
+} from "@/components/core/SelectField";
 import {
   createAndStep,
   createThenStep,
   withInitialRollKind,
   type CombineAction,
-  type ExampleSequence as AppRoll,
 } from "@/app/roll";
 import { listCombiners, type Combiner } from "@/lib/outcome";
 import {
@@ -26,18 +27,24 @@ import {
   type DaggerheartCheckRoll,
   type DamageRoll,
   type SpellRoll,
+} from "@/lib/roll";
+import {
   type AndStep,
   type ThenStep,
   type AgainstStep,
   type ModifyStep,
   type Step,
-} from "@/lib/dice";
+  type RollSequence as RollSequenceType,
+} from "@/lib/rollSequence";
 import CloseIcon from "@/components/icons/CloseIcon";
-import DiceField, { countsFromDice, getDice, totalDice } from "@/components/DiceField";
+import DiceField, {
+  countsFromDice,
+  getDice,
+  totalDice,
+} from "@/components/DiceField";
 import NumberField from "@/components/core/NumberField";
 import RadioGroupField from "@/components/core/RadioGroupField";
 import styles from "./RollSequence.module.scss";
-
 
 type CombineActionFieldProps = {
   value: CombineAction;
@@ -189,7 +196,7 @@ type StepListProps = {
 
 function StepList({ steps, onChange }: StepListProps) {
   function addStep(step: Step) {
-    onChange([ ...steps, step ]);
+    onChange([...steps, step]);
   }
 
   function removeStep(index: number) {
@@ -211,7 +218,7 @@ function StepList({ steps, onChange }: StepListProps) {
         />
       ))}
 
-      <AddStep onSelect={addStep}/>
+      <AddStep onSelect={addStep} />
     </>
   );
 }
@@ -228,35 +235,35 @@ function AddStep({ onSelect }: AddStepProps) {
           ? { type: "against", difficulty: 15 }
           : type === "and"
             ? createAndStep()
-            : createThenStep()
+            : createThenStep();
     onSelect(step);
   }
 
   return (
-      <div className={styles.customStepActions}>
-        <MenuTrigger>
-          <Button>+ Add step</Button>
-          <Popover className={styles.kindSelectPopover}>
-            <Menu
-              onAction={(key) => addStep(key as Step["type"])}
-              className={styles.kindSelectList}
-            >
-              <MenuItem id="modify" className={styles.kindSelectItem}>
-                Modify
-              </MenuItem>
-              <MenuItem id="evaluate" className={styles.kindSelectItem}>
-                Evaluate
-              </MenuItem>
-              <MenuItem id="and" className={styles.kindSelectItem}>
-                And
-              </MenuItem>
-              <MenuItem id="then" className={styles.kindSelectItem}>
-                Then
-              </MenuItem>
-            </Menu>
-          </Popover>
-        </MenuTrigger>
-      </div>
+    <div className={styles.customStepActions}>
+      <MenuTrigger>
+        <Button>+ Add step</Button>
+        <Popover className={styles.kindSelectPopover}>
+          <Menu
+            onAction={(key) => addStep(key as Step["type"])}
+            className={styles.kindSelectList}
+          >
+            <MenuItem id="modify" className={styles.kindSelectItem}>
+              Modify
+            </MenuItem>
+            <MenuItem id="evaluate" className={styles.kindSelectItem}>
+              Evaluate
+            </MenuItem>
+            <MenuItem id="and" className={styles.kindSelectItem}>
+              And
+            </MenuItem>
+            <MenuItem id="then" className={styles.kindSelectItem}>
+              Then
+            </MenuItem>
+          </Menu>
+        </Popover>
+      </MenuTrigger>
+    </div>
   );
 }
 
@@ -264,23 +271,24 @@ type NodeProps = {
   label: string;
   onRemove?: () => void;
   children: React.ReactNode;
-}
+};
 
 function Node({ label, onRemove, children }: NodeProps) {
   return (
     <fieldset className={styles.stepContent}>
-      <legend className={styles.stepLabel}>{ label }</legend>
-      { onRemove && <div className={styles.stepContentHeader}>
-        <Button
-          variant="ghost-icon"
-          onPress={onRemove}
-          aria-label="Remove step"
-        >
-          <CloseIcon />
-        </Button>
-      </div>
-      }
-      { children }
+      <legend className={styles.stepLabel}>{label}</legend>
+      {onRemove && (
+        <div className={styles.stepContentHeader}>
+          <Button
+            variant="ghost-icon"
+            onPress={onRemove}
+            aria-label="Remove step"
+          >
+            <CloseIcon />
+          </Button>
+        </div>
+      )}
+      {children}
     </fieldset>
   );
 }
@@ -292,12 +300,18 @@ type StepNodeProps = {
 };
 
 function StepNode({ step, onChange, onRemove }: StepNodeProps) {
-  if (step.type === 'and') {
-    return <AndStep step={step} onChange={onChange} onRemove={onRemove} />
+  if (step.type === "and") {
+    return <AndStep step={step} onChange={onChange} onRemove={onRemove} />;
   }
   return (
     <Node
-      label={step.type === "modify" ? "Modify" : step.type === "against" ? "Evaluate (DC)" : "Then"}
+      label={
+        step.type === "modify"
+          ? "Modify"
+          : step.type === "against"
+            ? "Evaluate (DC)"
+            : "Then"
+      }
       onRemove={onRemove}
     >
       {step.type === "modify" ? (
@@ -328,10 +342,10 @@ type DifficultyFieldsProps = {
   modifierLabel?: string;
   difficulty: number;
   modifier: number;
-  has?: 'advantage' | 'disadvantage';
+  has?: "advantage" | "disadvantage";
   onDifficultyChange: (difficulty: number) => void;
   onModifierChange: (modifier: number) => void;
-  onHasChange: (has: 'advantage' | 'disadvantage' | undefined) => void;
+  onHasChange: (has: "advantage" | "disadvantage" | undefined) => void;
 };
 
 function DifficultyFields({
@@ -364,14 +378,14 @@ function DifficultyFields({
 
       <RadioGroupField
         label="Has"
-        value={has ?? 'neither'}
+        value={has ?? "neither"}
         options={[
           { value: "advantage", label: "Advantage" },
           { value: "disadvantage", label: "Disadvantage" },
           { value: "neither", label: "Neither" },
         ]}
         onChange={(value) =>
-          onHasChange(value === 'neither' ? undefined : value)
+          onHasChange(value === "neither" ? undefined : value)
         }
       />
     </>
@@ -386,8 +400,8 @@ type BasicRollFieldsProps = {
 function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
   const dice = roll.args.dice ?? [roll.args.die];
 
-  function updateArgs(partial: Partial<BasicRoll['args']>) {
-    onChange({ ...roll, args: { ...roll.args as any, ...partial } });
+  function updateArgs(partial: Partial<BasicRoll["args"]>) {
+    onChange({ ...roll, args: { ...(roll.args as any), ...partial } });
   }
 
   return (
@@ -398,14 +412,17 @@ function BasicRollFields({ roll, onChange }: BasicRollFieldsProps) {
         allowModifier={false}
         onChange={(counts) => {
           const dice = getDice(counts);
-          const args: Partial<BasicRoll['args']> = dice.length === 1 ? { die: dice[0], dice: undefined } : { dice, die: undefined };
-          updateArgs(args)
+          const args: Partial<BasicRoll["args"]> =
+            dice.length === 1
+              ? { die: dice[0], dice: undefined }
+              : { dice, die: undefined };
+          updateArgs(args);
         }}
       />
 
       {roll.args.dice && dice.length > 1 && (
         <CombineActionField
-          value={roll.args.combine ?? 'sum'}
+          value={roll.args.combine ?? "sum"}
           onChange={(combine) => updateArgs({ combine })}
         />
       )}
@@ -458,7 +475,10 @@ type DaggerheartCheckRollFieldsProps = {
   onChange: (roll: DaggerheartCheckRoll) => void;
 };
 
-function DaggerheartCheckRollFields({ roll, onChange }: DaggerheartCheckRollFieldsProps) {
+function DaggerheartCheckRollFields({
+  roll,
+  onChange,
+}: DaggerheartCheckRollFieldsProps) {
   const { difficulty, modifier = 0, options = {} } = roll.args;
 
   function updateArgs(partial: Partial<DaggerheartCheckRoll["args"]>) {
@@ -485,7 +505,13 @@ type AttackRollFieldsProps = {
 };
 
 function AttackRollFields({ roll, onChange }: AttackRollFieldsProps) {
-  const { armor, modifier, damageDice, damageModifier = 0, options = {} } = roll.args;
+  const {
+    armor,
+    modifier,
+    damageDice,
+    damageModifier = 0,
+    options = {},
+  } = roll.args;
 
   function updateArgs(partial: Partial<AttackRoll["args"]>) {
     onChange({ ...roll, args: { ...roll.args, ...partial } });
@@ -500,7 +526,7 @@ function AttackRollFields({ roll, onChange }: AttackRollFieldsProps) {
         has={options.has}
         onDifficultyChange={(armor) => updateArgs({ armor })}
         onModifierChange={(modifier) => updateArgs({ modifier })}
-        onHasChange={(has) => updateArgs({ options: { ...options, has } }) }
+        onHasChange={(has) => updateArgs({ options: { ...options, has } })}
       />
 
       <DiceField
@@ -531,7 +557,13 @@ type SpellRollFieldsProps = {
 };
 
 function SpellRollFields({ roll, onChange }: SpellRollFieldsProps) {
-  const { dc, saveModifier = 0, damageDice, damageModifier = 0, options = {} } = roll.args;
+  const {
+    dc,
+    saveModifier = 0,
+    damageDice,
+    damageModifier = 0,
+    options = {},
+  } = roll.args;
 
   function updateArgs(partial: Partial<SpellRoll["args"]>) {
     onChange({ ...roll, args: { ...roll.args, ...partial } });
@@ -562,7 +594,9 @@ function SpellRollFields({ roll, onChange }: SpellRollFieldsProps) {
 
       <Checkbox
         isSelected={options.saveTakesHalf ?? false}
-        onChange={(saveTakesHalf) => updateArgs({ options: { ...options, saveTakesHalf } })}
+        onChange={(saveTakesHalf) =>
+          updateArgs({ options: { ...options, saveTakesHalf } })
+        }
         className={styles.checkbox}
       >
         <div className={styles.checkboxBox} aria-hidden="true" />
@@ -611,30 +645,24 @@ function RollFields({ roll, onChange }: RollFieldsProps) {
     case "check":
       return <CheckRollFields roll={roll} onChange={onChange} />;
     case "daggerheartCheck":
-      return (
-        <DaggerheartCheckRollFields roll={roll} onChange={onChange} />
-      );
+      return <DaggerheartCheckRollFields roll={roll} onChange={onChange} />;
     case "attack":
       return <AttackRollFields roll={roll} onChange={onChange} />;
     case "spellWithSave":
-      return (
-        <SpellRollFields roll={roll} onChange={onChange} />
-      );
+      return <SpellRollFields roll={roll} onChange={onChange} />;
     case "damage":
-      return (
-        <DamageRollFields roll={roll} onChange={onChange} />
-      );
+      return <DamageRollFields roll={roll} onChange={onChange} />;
   }
 }
 
 type RollProps = {
-  rollSequence: AppRoll,
-  label: string,
-  onRemove?: () => void,
-  onChange: (rollSequence: AppRoll) => void;
-}
+  rollSequence: RollSequenceType;
+  label: string;
+  onRemove?: () => void;
+  onChange: (rollSequence: RollSequenceType) => void;
+};
 
-function Roll({ rollSequence, label = 'Roll', onRemove, onChange }: RollProps) {
+function Roll({ rollSequence, label = "Roll", onRemove, onChange }: RollProps) {
   return (
     <>
       <Node label={label} onRemove={onRemove}>
@@ -660,15 +688,17 @@ function Roll({ rollSequence, label = 'Roll', onRemove, onChange }: RollProps) {
 }
 
 export type RollSequenceProps = {
-  rollSequence: AppRoll;
-  onChange: (roll: AppRoll) => void;
+  rollSequence: RollSequenceType;
+  onChange: (roll: RollSequenceType) => void;
 };
 
-export default function RollSequence({ rollSequence, onChange }: RollSequenceProps) {
+export default function RollSequence({
+  rollSequence,
+  onChange,
+}: RollSequenceProps) {
   return (
     <div className={styles.stepFlow}>
-      <Roll label="Roll" onChange={onChange} rollSequence={rollSequence}/>
+      <Roll label="Roll" onChange={onChange} rollSequence={rollSequence} />
     </div>
   );
 }
-

@@ -19,8 +19,8 @@ import {
   getRollDisplayName,
   getDistributionBuilder,
   sortCategories,
-  type ExampleSequence,
 } from "@/app/roll";
+import { type RollSequence } from "@/lib/rollSequence";
 import CategoricalComparisonChart from "./CategoricalComparisonChart";
 import styles from "./ComparisonChart.module.scss";
 
@@ -56,7 +56,7 @@ function ComparisonTooltip({ active, payload, label }: TooltipContentProps) {
 }
 
 type ComparisonChartProps = {
-  rolls: ExampleSequence[];
+  rolls: RollSequence[];
 };
 
 export default function ComparisonChart({ rolls }: ComparisonChartProps) {
@@ -65,7 +65,7 @@ export default function ComparisonChart({ rolls }: ComparisonChartProps) {
       const builder = getDistributionBuilder(roll);
       return {
         id: index,
-        label: roll.name.trim()
+        label: roll.name?.trim()
           ? getRollDisplayName(roll, index)
           : formatRollLabel(roll) || getRollDisplayName(roll, index),
         color: colorForIndex(index),

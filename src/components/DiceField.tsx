@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { type Die, DICE } from "@/lib/dice";
+import { type Die, DICE, diceToString } from "@/lib/dice";
 import TextField from "./core/TextField";
 
 export type Counts = Partial<Record<Die, number>>;
@@ -30,19 +30,21 @@ const MIN_MODIFIER = -20;
 const MAX_MODIFIER = 20;
 
 export type ParseResult =
-  | { ok: true; counts: Counts; modifier: number }
-  | { ok: false; error: string };
+  { ok: true; counts: Counts; modifier: number } | { ok: false; error: string };
 
-export function parseRollExpression(input: string, allowModifier: boolean = true): ParseResult {
+export function parseRollExpression(
+  input: string,
+  allowModifier: boolean = true,
+): ParseResult {
   const stripped = input.replace(/\s+/g, "");
   if (stripped === "") {
-    return { ok: true, counts: { }, modifier: 0 };
+    return { ok: true, counts: {}, modifier: 0 };
   }
 
   const signed = /^[+-]/.test(stripped) ? stripped : `+${stripped}`;
   const terms = signed.match(/[+-][^+-]+/g) ?? [];
 
-  const counts: Counts = { };
+  const counts: Counts = {};
   let modifier = 0;
 
   for (const term of terms) {
@@ -62,7 +64,7 @@ export function parseRollExpression(input: string, allowModifier: boolean = true
       if (!isDie(sides)) {
         return {
           ok: false,
-          error: `d${sides} isn't supported — use ${DICE.map(d => `d${d}`).join(', ')}.`,
+          error: `d${sides} isn't supported — use ${DICE.map((d) => `d${d}`).join(", ")}.`,
         };
       }
 
@@ -76,7 +78,7 @@ export function parseRollExpression(input: string, allowModifier: boolean = true
         return {
           ok: false,
           error: "Modifiers aren't allowed here — add a Modify step instead.",
-        }
+        };
       }
       modifier += sign * Number(body);
       continue;
@@ -91,18 +93,8 @@ export function parseRollExpression(input: string, allowModifier: boolean = true
 }
 
 export function formatRollExpression(counts: Counts, modifier: number): string {
-  const terms = DICE.filter((sides) => (counts[sides] ?? 0) > 0).map(
-    (sides) => `${counts[sides]}d${sides}`,
-  );
-  if (terms.length === 0) return "";
-
-  const expression = terms.join(" + ");
-  if (modifier === 0) return expression;
-
-  const sign = modifier > 0 ? "+" : "-";
-  return `${expression} ${sign} ${Math.abs(modifier)}`;
+  return diceToString(getDice(counts), modifier);
 }
-
 
 export type DiceFieldProps = {
   label?: string;

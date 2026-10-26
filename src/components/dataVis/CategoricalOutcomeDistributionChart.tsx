@@ -12,7 +12,11 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { colorForIndex, sortCategories, type DistributionPoint } from "@/app/roll";
+import {
+  colorForIndex,
+  sortCategories,
+  type DistributionPoint,
+} from "@/app/roll";
 import styles from "./CategoricalOutcomeDistributionChart.module.scss";
 
 function OutcomeTooltip({ active, payload }: TooltipContentProps) {
@@ -59,7 +63,10 @@ export default function CategoricalOutcomeDistributionChart({
   return (
     <div className={styles.card}>
       <h3 className={styles.sectionLabel}>Outcome likelihood</h3>
-      <ResponsiveContainer width="100%" height={Math.max(120, data.length * 44)}>
+      <ResponsiveContainer
+        width="100%"
+        height={Math.max(120, data.length * 44)}
+      >
         <BarChart
           data={data}
           layout="vertical"

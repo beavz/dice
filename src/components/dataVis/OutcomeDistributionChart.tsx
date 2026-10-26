@@ -13,7 +13,11 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
-import { colorForIndex, sortCategories, type DistributionPoint } from "@/app/roll";
+import {
+  colorForIndex,
+  sortCategories,
+  type DistributionPoint,
+} from "@/app/roll";
 import styles from "./OutcomeDistributionChart.module.scss";
 
 type ChartRow = { value: number } & Record<string, number | undefined>;
@@ -78,7 +82,10 @@ export default function OutcomeDistributionChart({
     <div className={styles.card}>
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={data} margin={{ top: 24, right: 8, bottom: 0, left: 0 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 24, right: 8, bottom: 0, left: 0 }}
+          >
             <CartesianGrid
               vertical={false}
               stroke="var(--gridline)"
