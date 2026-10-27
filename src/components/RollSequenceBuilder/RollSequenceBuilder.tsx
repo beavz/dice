@@ -40,8 +40,6 @@ type CombineActionFieldProps = {
   onChange: (action: CombineOutcomesStrategy) => void;
 };
 
-export const COMBINERS = listCombiners();
-
 function CombineActionField({ value, onChange }: CombineActionFieldProps) {
   return (
     <SelectField

@@ -6,9 +6,6 @@ import TextField from "./core/TextField";
 
 export type Counts = Partial<Record<Die, number>>;
 
-export function totalDice(counts: Counts): number {
-  return Object.values(counts).reduce((a, b) => a + b, 0);
-}
 export function getDice(counts: Counts): Die[] {
   return DICE.flatMap((die) => Array(counts[die] ?? 0).fill(die));
 }
