@@ -1,24 +1,3 @@
-import { initializeRoll } from "@/lib/roll";
-import { type AndStep, type ThenStep } from "@/lib/rollSequence";
-
-export function createThenStep(): ThenStep {
-  return {
-    type: "then",
-    after: {},
-  };
-}
-
-export function createAndStep(): AndStep {
-  return {
-    type: "and",
-    combine: "sum",
-    roll: {
-      initialRoll: initializeRoll("basic"),
-      steps: [],
-    },
-  };
-}
-
 export const CATEGORICAL_COLORS = [
   "var(--series-1)",
   "var(--series-2)",

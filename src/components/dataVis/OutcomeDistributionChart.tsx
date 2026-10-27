@@ -18,6 +18,7 @@ import {
 } from "@/lib/outcomeDistribution";
 import type { TooltipContentProps } from "recharts";
 import { colorForIndex, sortCategories } from "@/app/roll";
+import Card from "@/components/core/Card";
 import styles from "./OutcomeDistributionChart.module.scss";
 
 type ChartRow = { value: number } & Record<string, number | undefined>;
@@ -81,7 +82,7 @@ export default function OutcomeDistributionChart({
   }, [distribution]);
 
   return (
-    <div className={styles.card}>
+    <Card>
       {data.length > 0 ? (
         <ResponsiveContainer width="100%" height={320}>
           <BarChart
@@ -151,6 +152,6 @@ export default function OutcomeDistributionChart({
       ) : (
         <p className={styles.empty}>Select at least one die to see odds.</p>
       )}
-    </div>
+    </Card>
   );
 }

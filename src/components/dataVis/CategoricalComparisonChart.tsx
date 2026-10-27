@@ -11,6 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import type { TooltipContentProps } from "recharts";
+import Card from "@/components/core/Card";
 import styles from "./CategoricalComparisonChart.module.scss";
 
 type OutcomeComparisonPoint = { label: string } & Record<
@@ -59,8 +60,7 @@ export default function CategoricalComparisonChart({
   data,
 }: CategoricalComparisonChartProps) {
   return (
-    <div className={styles.card}>
-      <h3 className={styles.sectionLabel}>Outcome likelihood</h3>
+    <Card title="Outcome likelihood" className={styles.spacing}>
       <ResponsiveContainer
         width="100%"
         height={Math.max(160, data.length * 44)}
@@ -106,6 +106,6 @@ export default function CategoricalComparisonChart({
           ))}
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </Card>
   );
 }

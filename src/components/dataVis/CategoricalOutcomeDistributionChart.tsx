@@ -14,6 +14,7 @@ import {
 import type { TooltipContentProps } from "recharts";
 import { type CategorizedOutcomeDistribution } from "@/lib/outcomeDistribution";
 import { colorForIndex, sortCategories } from "@/app/roll";
+import Card from "@/components/core/Card";
 import styles from "./CategoricalOutcomeDistributionChart.module.scss";
 
 function OutcomeTooltip({ active, payload }: TooltipContentProps) {
@@ -58,8 +59,7 @@ export default function CategoricalOutcomeDistributionChart({
   if (data.length <= 1) return null;
 
   return (
-    <div className={styles.card}>
-      <h3 className={styles.sectionLabel}>Outcome likelihood</h3>
+    <Card title="Outcome likelihood" className={styles.spacing}>
       <ResponsiveContainer
         width="100%"
         height={Math.max(120, data.length * 44)}
@@ -101,6 +101,6 @@ export default function CategoricalOutcomeDistributionChart({
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-    </div>
+    </Card>
   );
 }

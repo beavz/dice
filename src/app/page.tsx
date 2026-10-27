@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Button from "@/components/core/Button";
-import ComparisonChart from "@/components/dataVis/ComparisonChart";
-import RollCard from "./RollCard";
+import ComparisonSection from "@/components/ComparisonSection";
+import RollSection from "@/components/RollSection";
 import { type RollSequence } from "@/lib/rollSequence";
 import styles from "./page.module.scss";
 
@@ -47,7 +47,7 @@ export default function Home() {
       </p>
 
       {rolls.map((roll, index) => (
-        <RollCard
+        <RollSection
           key={index}
           index={index}
           roll={roll}
@@ -60,7 +60,7 @@ export default function Home() {
 
       <Button onPress={addRoll}>Add roll</Button>
 
-      {rolls.length > 1 && <ComparisonChart rolls={rolls} />}
+      {rolls.length > 1 && <ComparisonSection rolls={rolls} />}
     </main>
   );
 }

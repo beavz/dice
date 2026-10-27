@@ -15,13 +15,13 @@ import DiceIcon from "@/components/icons/DiceIcon";
 import SwordIcon from "@/components/icons/SwordIcon";
 import WizardHatIcon from "@/components/icons/WizardHatIcon";
 import { RollSequenceBuilder } from "@/components/RollSequenceBuilder";
-import styles from "./page.module.scss";
+import styles from "./RollSection.module.scss";
 
 function getDiceOf(initialRoll: BasicRoll): Dice {
   return initialRoll.args.dice ?? [initialRoll.args.die];
 }
 
-type RollCardProps = {
+type RollSectionProps = {
   index: number;
   roll: RollSequence;
   onChange: (roll: RollSequence) => void;
@@ -30,14 +30,14 @@ type RollCardProps = {
   canRemove: boolean;
 };
 
-export default function RollCard({
+export default function RollSection({
   index,
   roll,
   onChange,
   onDuplicate,
   onRemove,
   canRemove,
-}: RollCardProps) {
+}: RollSectionProps) {
   const distribution = useMemo(() => getOutcomeDistribution(roll), [roll]);
   const label = getSequenceLabel(roll);
   const { initialRoll } = roll;

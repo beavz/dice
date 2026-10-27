@@ -1,0 +1,34 @@
+.rollLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  @media (min-width: 900px) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.rollConfig {
+  min-width: 0;
+
+  @media (min-width: 900px) {
+    flex: 0 0 320px;
+  }
+}
+
+.rollCharts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+
+  @media (min-width: 900px) {
+    flex: 1;
+  }
+}
+
+.rollIcon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
